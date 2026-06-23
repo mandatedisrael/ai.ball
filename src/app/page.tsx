@@ -6,24 +6,59 @@ import { AnalysisStream } from "@/components/analysis-stream";
 import { Disclaimer } from "@/components/disclaimer";
 import { MatchInput } from "@/components/match-input";
 import { ProbabilityBreakdown } from "@/components/probability-breakdown";
+import { SavedAnalyses } from "@/components/saved-analyses";
+import { ServiceStatus } from "@/components/service-status";
 import { TradingInsight } from "@/components/trading-insight";
-import type { AnalysisResult } from "@/types/analysis";
+import { runAnalysisStream } from "@/lib/client/analyze-stream";
+import type { SupportedLeague } from "@/lib/leagues";
+import type { AnalysisResult, SavedAnalysis } from "@/types/analysis";
 import type { FixtureSummary } from "@/types/fixture";
 import type { PolymarketMarketContext } from "@/types/polymarket";
 
 export default function HomePage() {
   const [query, setQuery] = useState("");
+  const [leagues, setLeagues] = useState<SupportedLeague[]>([]);
+  const [selectedLeagueId, setSelectedLeagueId] = useState<number | null>(null);
   const [fixtures, setFixtures] = useState<FixtureSummary[]>([]);
   const [selectedFixture, setSelectedFixture] = useState<FixtureSummary | null>(
     null,
   );
   const [market, setMarket] = useState<PolymarketMarketContext | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [savedItems, setSavedItems] = useState<SavedAnalysis[]>([]);
+  const [favoriteTeams, setFavoriteTeams] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingSaved, setIsLoadingSaved] = useState(false);
+  const [progressMessage, setProgressMessage] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const loadPreferences = useCallback(async () => {
+    try {
+      const response = await fetch("/api/user/preferences");
+      const data = await response.json();
+      if (response.ok) {
+        setFavoriteTeams(data.preferences?.favoriteTeams ?? []);
+      }
+    } catch {
+      setFavoriteTeams([]);
+    }
+  }, []);
+
+  const loadSaved = useCallback(async () => {
+    setIsLoadingSaved(true);
+    try {
+      const response = await fetch("/api/saved");
+      const data = await response.json();
+      if (response.ok) {
+        setSavedItems(data.items ?? []);
+      }
+    } finally {
+      setIsLoadingSaved(false);
+    }
+  }, []);
 
   const searchFixtures = useCallback(async () => {
     setIsSearching(true);
@@ -32,6 +67,7 @@ export default function HomePage() {
     try {
       const params = new URLSearchParams();
       if (query.trim()) params.set("query", query.trim());
+      if (selectedLeagueId) params.set("leagueId", String(selectedLeagueId));
 
       const response = await fetch(`/api/fixtures/search?${params.toString()}`);
       const data = await response.json();
@@ -46,7 +82,7 @@ export default function HomePage() {
     } finally {
       setIsSearching(false);
     }
-  }, [query]);
+  }, [query, selectedLeagueId]);
 
   const loadMarket = useCallback(async (fixtureId: number) => {
     try {
@@ -65,9 +101,27 @@ export default function HomePage() {
       setSelectedFixture(fixture);
       setResult(null);
       setSaveMessage(null);
+      setProgressMessage(null);
       void loadMarket(fixture.id);
     },
     [loadMarket],
+  );
+
+  const toggleFavorite = useCallback(
+    async (teamName: string) => {
+      const next = favoriteTeams.includes(teamName)
+        ? favoriteTeams.filter((team) => team !== teamName)
+        : [...favoriteTeams, teamName];
+
+      setFavoriteTeams(next);
+
+      await fetch("/api/user/preferences", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ favoriteTeams: next }),
+      });
+    },
+    [favoriteTeams],
   );
 
   const runAnalysis = useCallback(async () => {
@@ -76,24 +130,22 @@ export default function HomePage() {
     setIsAnalyzing(true);
     setError(null);
     setSaveMessage(null);
+    setProgressMessage("Starting analysis…");
+    setResult(null);
 
     try {
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fixtureId: selectedFixture.id }),
+      await runAnalysisStream(selectedFixture.id, {
+        onProgress: setProgressMessage,
+        onResult: setResult,
+        onError: (message) => {
+          throw new Error(message);
+        },
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error ?? "Analysis failed");
-      }
-
-      setResult(data.result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Analysis failed");
     } finally {
       setIsAnalyzing(false);
+      setProgressMessage(null);
     }
   }, [selectedFixture]);
 
@@ -116,6 +168,7 @@ export default function HomePage() {
       }
 
       setSaveMessage("Analysis saved with Polymarket snapshot.");
+      await loadSaved();
     } catch (err) {
       setSaveMessage(
         err instanceof Error ? err.message : "Could not save analysis",
@@ -123,7 +176,19 @@ export default function HomePage() {
     } finally {
       setIsSaving(false);
     }
-  }, [result]);
+  }, [result, loadSaved]);
+
+  useEffect(() => {
+    void fetch("/api/leagues")
+      .then((res) => res.json())
+      .then((data) => setLeagues(data.leagues ?? []))
+      .catch(() => setLeagues([]));
+  }, []);
+
+  useEffect(() => {
+    void loadPreferences();
+    void loadSaved();
+  }, [loadPreferences, loadSaved]);
 
   useEffect(() => {
     void searchFixtures();
@@ -144,6 +209,8 @@ export default function HomePage() {
         </p>
       </header>
 
+      <ServiceStatus />
+
       {error && (
         <div className="border-negative/40 bg-negative/10 text-negative rounded-xl border px-4 py-3 text-sm">
           {error}
@@ -152,19 +219,28 @@ export default function HomePage() {
 
       <MatchInput
         query={query}
+        leagues={leagues}
+        selectedLeagueId={selectedLeagueId}
         fixtures={fixtures}
         selectedFixture={selectedFixture}
         market={market}
+        favoriteTeams={favoriteTeams}
         isSearching={isSearching}
         onQueryChange={setQuery}
+        onLeagueChange={setSelectedLeagueId}
         onSearch={searchFixtures}
         onSelectFixture={handleSelectFixture}
+        onToggleFavorite={toggleFavorite}
         onAnalyze={runAnalysis}
         isAnalyzing={isAnalyzing}
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <AnalysisStream result={result} isLoading={isAnalyzing} />
+        <AnalysisStream
+          result={result}
+          isLoading={isAnalyzing}
+          progressMessage={progressMessage}
+        />
         <ProbabilityBreakdown result={result} />
       </div>
 
@@ -173,6 +249,12 @@ export default function HomePage() {
         onSave={saveAnalysis}
         isSaving={isSaving}
         saveMessage={saveMessage}
+      />
+
+      <SavedAnalyses
+        items={savedItems}
+        isLoading={isLoadingSaved}
+        onRefresh={loadSaved}
       />
 
       <Disclaimer />
