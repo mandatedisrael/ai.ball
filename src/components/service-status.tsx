@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from "react";
 
+interface FootballDataRateLimit {
+  requestsAvailable: number | null;
+  resetSeconds: number | null;
+  client: string | null;
+}
+
 interface HealthResponse {
   mode: "live" | "football-only" | "compute-only" | "unconfigured";
   services: {
@@ -13,6 +19,7 @@ interface HealthResponse {
     openWeather: boolean;
     polymarket: boolean;
   };
+  footballDataRateLimit?: FootballDataRateLimit | null;
 }
 
 const MODE_LABELS: Record<HealthResponse["mode"], string> = {
@@ -56,6 +63,14 @@ export function ServiceStatus() {
       <StatusPill label="0G Compute" active={health.services.zerogCompute} />
       <StatusPill label="Weather" active={health.services.openWeather} />
       <StatusPill label="Polymarket" active={health.services.polymarket} />
+      {health.services.footballProvider === "football-data" &&
+        health.footballDataRateLimit?.requestsAvailable != null && (
+          <span className="text-muted rounded-full bg-surface-elevated px-3 py-1 text-xs font-medium">
+            {health.footballDataRateLimit.requestsAvailable}/min left
+            {health.footballDataRateLimit.resetSeconds != null &&
+              ` · resets ${health.footballDataRateLimit.resetSeconds}s`}
+          </span>
+        )}
     </div>
   );
 }

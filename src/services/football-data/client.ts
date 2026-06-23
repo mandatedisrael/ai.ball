@@ -1,5 +1,7 @@
 import { env, hasFootballData } from "@/lib/env";
 
+import { captureFootballDataRateLimit } from "./rate-limit";
+
 const BASE_URL = "https://api.football-data.org/v4";
 
 export class FootballDataError extends Error {
@@ -43,10 +45,14 @@ export async function footballDataFetch<T>(
   }
 
   const response = await fetch(url, fetchInit);
+  captureFootballDataRateLimit(response.headers);
 
   if (response.status === 429) {
+    const rate = captureFootballDataRateLimit(response.headers);
+    const resetHint =
+      rate.resetSeconds != null ? ` Retry in ${rate.resetSeconds}s.` : "";
     throw new FootballDataError(
-      "football-data.org rate limit reached (10 requests/min on free tier). Wait a moment and retry.",
+      `football-data.org rate limit reached (10 requests/min on free tier).${resetHint}`,
       429,
     );
   }

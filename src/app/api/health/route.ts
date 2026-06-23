@@ -8,6 +8,7 @@ import {
   hasZerogCompute,
 } from "@/lib/env";
 import { resolveZerogRouterModel } from "@/lib/zerog-models";
+import { getFootballDataRateLimit } from "@/services/football-data/rate-limit";
 
 export async function GET() {
   const footballProvider = getFootballProvider();
@@ -37,5 +38,7 @@ export async function GET() {
     zerogRouterModel: zerogCompute
       ? resolveZerogRouterModel(env.zerogRouterModel)
       : null,
+    footballDataRateLimit:
+      footballProvider === "football-data" ? getFootballDataRateLimit() : null,
   });
 }
