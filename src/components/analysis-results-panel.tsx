@@ -43,7 +43,7 @@ export function AnalysisResultsPanel({
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="bg-positive h-2 w-2 rounded-full" aria-hidden />
-            <h2 className="text-sm font-semibold">Analysis complete</h2>
+            <h2 className="font-display text-base font-bold">Analysis complete</h2>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="bg-surface-elevated text-muted rounded-full px-3 py-1 font-mono text-xs font-medium">
@@ -126,7 +126,7 @@ export function AnalysisResultsPanel({
             type="button"
             onClick={onSave}
             disabled={isSaving}
-            className="bg-foreground hover:bg-foreground/90 rounded-full px-5 py-2.5 text-sm font-semibold text-background transition disabled:opacity-60"
+            className="btn-primary disabled:opacity-60"
           >
             {isSaving ? "Saving…" : "Save analysis"}
           </button>
@@ -135,7 +135,7 @@ export function AnalysisResultsPanel({
               href={result.polymarket.url}
               target="_blank"
               rel="noreferrer"
-              className="border-border hover:border-foreground/20 rounded-full border px-5 py-2.5 text-sm font-medium transition"
+              className="btn-ghost px-5 py-2.5 text-sm font-medium"
             >
               View on Polymarket ↗
             </a>

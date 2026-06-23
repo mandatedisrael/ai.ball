@@ -51,7 +51,7 @@ export function TeamSpotlightCard({
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-muted mb-1 text-sm">{nextFixture.league.name}</p>
-              <h3 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              <h3 className="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
                 {nextFixture.homeTeam.name}
                 <span className="text-muted mx-2 font-normal">vs</span>
                 {nextFixture.awayTeam.name}

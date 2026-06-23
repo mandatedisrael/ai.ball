@@ -10,11 +10,7 @@ import {
   YAxis,
 } from "recharts";
 
-import {
-  CHART_GRID_COLOR,
-  CHART_TICK_COLOR,
-  CHART_TOOLTIP_STYLE,
-} from "@/components/charts/chart-theme";
+import { useChartTheme } from "@/hooks/use-chart-theme";
 import type { TeamForm } from "@/types/fixture";
 
 interface FormTrendChartProps {
@@ -41,6 +37,7 @@ export function FormTrendChart({
   homeForm,
   awayForm,
 }: FormTrendChartProps) {
+  const chartTheme = useChartTheme();
   const home = buildSeries(homeForm, "H");
   const away = buildSeries(awayForm, "A");
   const data = home.map((point, index) => ({
@@ -55,10 +52,10 @@ export function FormTrendChart({
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
-            <XAxis dataKey="match" tick={{ fontSize: 12, fill: CHART_TICK_COLOR }} />
-            <YAxis tick={{ fontSize: 12, fill: CHART_TICK_COLOR }} />
-            <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+            <XAxis dataKey="match" tick={{ fontSize: 12, fill: chartTheme.tick }} />
+            <YAxis tick={{ fontSize: 12, fill: chartTheme.tick }} />
+            <Tooltip contentStyle={chartTheme.tooltip} />
             <Line
               type="monotone"
               dataKey={homeTeam}

@@ -36,11 +36,11 @@ export function AnalysisSourcePills({
         return (
           <li
             key={source.id}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-full px-3 py-1 text-xs font-semibold tracking-wide transition-all ${
               done
-                ? "bg-positive/12 text-positive"
+                ? "bg-positive/12 text-positive ring-1 ring-positive/15"
                 : active
-                  ? "bg-foreground text-background"
+                  ? "bg-foreground text-background shadow-[0_4px_16px_-6px_var(--glow)]"
                   : "bg-surface-elevated text-muted"
             }`}
           >
@@ -51,11 +51,11 @@ export function AnalysisSourcePills({
       })}
       {(complete || activeIndex >= 4) && (
         <li
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
+          className={`rounded-full px-3 py-1 text-xs font-semibold tracking-wide ${
             complete
-              ? "bg-positive/12 text-positive"
+              ? "bg-positive/12 text-positive ring-1 ring-positive/15"
               : activeStep === "inference"
-                ? "bg-foreground text-background"
+                ? "bg-foreground text-background shadow-[0_4px_16px_-6px_var(--glow)]"
                 : "bg-surface-elevated text-muted"
           }`}
         >

@@ -9,15 +9,15 @@ export function TeeVerifiedBadge({
 }: TeeVerifiedBadgeProps) {
   const sizeClasses =
     size === "md"
-      ? "gap-2 px-3.5 py-1.5 text-xs"
-      : "gap-1.5 px-3 py-1 text-[0.68rem]";
+      ? "gap-2 px-3.5 py-1.5 text-[0.68rem]"
+      : "gap-1.5 px-3 py-1 text-[0.62rem]";
 
   return (
     <span
-      className={`bg-accent/10 text-accent inline-flex items-center rounded-full font-semibold tracking-wide uppercase ${sizeClasses} ${className}`}
-      title="This response was generated inside 0G's Trusted Execution Environment — verifiable and tamper-resistant."
+      className={`bg-accent-soft text-accent inline-flex items-center rounded-full font-bold tracking-widest uppercase ring-1 ring-accent/20 ${sizeClasses} ${className}`}
+      title="Generated inside 0G's Trusted Execution Environment — verifiable and tamper-resistant."
     >
-      <ShieldIcon className={size === "md" ? "h-4 w-4" : "h-3.5 w-3.5"} />
+      <ShieldIcon className={size === "md" ? "h-3.5 w-3.5" : "h-3 w-3"} />
       TEE verified
     </span>
   );
@@ -26,14 +26,14 @@ export function TeeVerifiedBadge({
 export function TeeVerifiedCallout({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`flex items-start gap-3 rounded-xl border border-accent/20 bg-accent/5 px-4 py-3 ${className}`}
+      className={`flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent-soft px-4 py-3.5 ${className}`}
     >
       <ShieldIcon className="text-accent mt-0.5 h-4 w-4 shrink-0" />
       <div>
-        <p className="text-sm font-medium">0G TEE verified response</p>
+        <p className="text-sm font-semibold">0G TEE verified response</p>
         <p className="text-muted mt-1 text-xs leading-5">
-          Analysis runs inside 0G&apos;s Trusted Execution Environment — inference
-          is isolated, attestable, and tamper-resistant by design.
+          Inference runs in an isolated, attestable environment — tamper-resistant
+          by design.
         </p>
       </div>
     </div>

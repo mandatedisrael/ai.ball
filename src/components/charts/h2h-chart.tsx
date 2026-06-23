@@ -11,11 +11,7 @@ import {
   YAxis,
 } from "recharts";
 
-import {
-  CHART_GRID_COLOR,
-  CHART_TICK_COLOR,
-  CHART_TOOLTIP_STYLE,
-} from "@/components/charts/chart-theme";
+import { useChartTheme } from "@/hooks/use-chart-theme";
 import type { HeadToHeadMatch } from "@/types/fixture";
 
 interface H2HChartProps {
@@ -25,6 +21,7 @@ interface H2HChartProps {
 }
 
 export function H2HChart({ matches, homeTeam, awayTeam }: H2HChartProps) {
+  const chartTheme = useChartTheme();
   const data = matches.slice(0, 5).map((match) => ({
     date: match.date.slice(5),
     homeGoals: match.homeGoals,
@@ -46,10 +43,10 @@ export function H2HChart({ matches, homeTeam, awayTeam }: H2HChartProps) {
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
-            <XAxis dataKey="date" tick={{ fontSize: 12, fill: CHART_TICK_COLOR }} />
-            <YAxis tick={{ fontSize: 12, fill: CHART_TICK_COLOR }} />
-            <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+            <XAxis dataKey="date" tick={{ fontSize: 12, fill: chartTheme.tick }} />
+            <YAxis tick={{ fontSize: 12, fill: chartTheme.tick }} />
+            <Tooltip contentStyle={chartTheme.tooltip} />
             <Legend />
             <Bar
               dataKey="homeGoals"

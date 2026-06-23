@@ -7,30 +7,12 @@ import { TeeVerifiedBadge } from "@/components/tee-verified-badge";
 import type { AnalysisProgressStep } from "@/types/stream";
 
 const STEP_HINTS: Record<AnalysisProgressStep, string[]> = {
-  fixture: [
-    "Resolving fixture details…",
-    "Locking in kickoff and venue…",
-  ],
-  football: [
-    "Fetching form, H2H, injuries, and standings…",
-    "Reviewing recent results…",
-  ],
-  polymarket: [
-    "Checking Polymarket for market context…",
-    "Comparing crowd odds…",
-  ],
-  weather: [
-    "Loading venue weather context…",
-    "Factoring match-day conditions…",
-  ],
-  inference: [
-    "Running 0G AI analyst…",
-    "Crunching win probabilities…",
-  ],
-  complete: [
-    "Packaging charts and trends…",
-    "Almost ready…",
-  ],
+  fixture: ["Resolving fixture details…", "Locking kickoff and venue…"],
+  football: ["Pulling form, H2H, and injuries…", "Reading recent results…"],
+  polymarket: ["Scanning Polymarket markets…", "Mapping crowd odds…"],
+  weather: ["Checking venue weather…", "Factoring match-day conditions…"],
+  inference: ["Running 0G analyst in TEE…", "Computing win probabilities…"],
+  complete: ["Packaging charts…", "Almost there…"],
 };
 
 interface AnalysisResearchStageProps {
@@ -58,7 +40,7 @@ export function AnalysisResearchStage({
     if (message) return;
     const interval = window.setInterval(() => {
       setHintIndex((current) => (current + 1) % hints.length);
-    }, 2800);
+    }, 2600);
     return () => window.clearInterval(interval);
   }, [message, hints]);
 
@@ -66,22 +48,26 @@ export function AnalysisResearchStage({
   const isInference = step === "inference" || step === "complete";
 
   return (
-    <section className="space-y-5" aria-live="polite" aria-busy="true">
-      <div className="card p-6 sm:p-8">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="analysis-live-dot" aria-hidden />
-            <h2 className="text-sm font-semibold">Running analysis</h2>
+    <section className="animate-fade-up space-y-5" aria-live="polite" aria-busy="true">
+      <div className="card overflow-hidden p-6 sm:p-8">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="analysis-orb bg-accent/20 text-accent flex h-10 w-10 items-center justify-center rounded-2xl text-lg ring-1 ring-accent/25">
+              ⚽
+            </span>
+            <div>
+              <p className="label mb-0.5">In progress</p>
+              <h2 className="font-display text-lg font-bold">Building your analysis</h2>
+            </div>
           </div>
           {isInference && <TeeVerifiedBadge size="md" />}
         </div>
 
+        <div className="analysis-progress-bar mb-5" />
+
         <AnalysisSourcePills activeStep={step} />
 
         <p className="text-muted mt-4 text-sm">{hint}</p>
-        {isInference && (
-          <p className="text-muted mt-2 text-sm">Building charts and trends…</p>
-        )}
       </div>
 
       <ChartSkeletonGrid homeTeam={homeTeam} awayTeam={awayTeam} />
@@ -108,29 +94,17 @@ function ChartSkeletonGrid({
       {cards.map((card, index) => (
         <div
           key={card.title}
-          className="card analysis-skeleton-card overflow-hidden p-5"
-          style={{ animationDelay: `${index * 120}ms` }}
+          className="card analysis-skeleton-card p-5"
+          style={{ animationDelay: `${index * 100}ms` }}
         >
           <div className="mb-4">
             <p className="label mb-1">{card.title}</p>
             <p className="text-muted text-xs">{card.subtitle}</p>
           </div>
           <div className="space-y-3">
-            <div className="analysis-shimmer h-3 w-4/5 rounded-full" />
-            <div className="analysis-shimmer h-3 w-full rounded-full" />
-            <div className="analysis-shimmer h-3 w-11/12 rounded-full" />
-            <div className="mt-5 flex items-end gap-2">
-              {[40, 64, 48, 72, 56].map((height, barIndex) => (
-                <div
-                  key={barIndex}
-                  className="analysis-bar-pulse bg-accent/20 flex-1 rounded-t-md"
-                  style={{
-                    height: `${height}px`,
-                    animationDelay: `${index * 100 + barIndex * 80}ms`,
-                  }}
-                />
-              ))}
-            </div>
+            <div className="analysis-shimmer h-2.5 w-4/5 rounded-full" />
+            <div className="analysis-shimmer h-2.5 w-full rounded-full" />
+            <div className="analysis-shimmer mt-6 h-24 w-full rounded-xl" />
           </div>
         </div>
       ))}

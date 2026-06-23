@@ -154,7 +154,7 @@ export function AskAnalyst({ result }: AskAnalystProps) {
         <button
           type="submit"
           disabled={isLoading || !input.trim()}
-          className="bg-accent hover:bg-accent/90 rounded-xl px-5 py-3 text-sm font-semibold text-zinc-950 transition disabled:opacity-50"
+          className="btn-primary rounded-xl px-5 py-3 text-sm disabled:opacity-50"
         >
           Send
         </button>

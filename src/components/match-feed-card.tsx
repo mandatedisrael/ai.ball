@@ -14,38 +14,47 @@ import type { PolymarketMarketContext } from "@/types/polymarket";
 interface MatchFeedCardProps {
   fixture: FixtureSummary;
   market?: PolymarketMarketContext | null;
+  index?: number;
 }
 
-export function MatchFeedCard({ fixture, market }: MatchFeedCardProps) {
+export function MatchFeedCard({ fixture, market, index = 0 }: MatchFeedCardProps) {
   const preview = buildMatchPreview(fixture);
   const live = isFixtureLive(fixture);
   const upcoming = isFixtureUpcoming(fixture);
   const polyOutcome = market?.outcomes[0];
+  const staggerClass =
+    index % 4 === 0
+      ? ""
+      : index % 4 === 1
+        ? "stagger-1"
+        : index % 4 === 2
+          ? "stagger-2"
+          : "stagger-3";
 
   return (
     <Link
       href={`/match/${fixture.id}`}
       onClick={() => stashFixtureForNavigation(fixture)}
-      className="card card-hover group flex flex-col p-5 transition-transform hover:-translate-y-0.5"
+      className={`card card-hover animate-fade-up group flex flex-col p-5 ${staggerClass}`}
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <p className="text-muted mb-1 text-xs">{fixture.league.name}</p>
-          <h2 className="text-lg font-semibold tracking-tight group-hover:text-accent transition-colors">
+          <p className="label mb-1.5">{fixture.league.name}</p>
+          <h2 className="font-display text-lg font-bold tracking-tight transition-colors group-hover:text-accent sm:text-xl">
             {fixture.homeTeam.name}
-            <span className="text-muted mx-1.5 font-normal">vs</span>
+            <span className="text-muted mx-2 font-normal">vs</span>
             {fixture.awayTeam.name}
           </h2>
         </div>
         {live && (
-          <span className="bg-negative/15 text-negative live-pulse flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold">
+          <span className="bg-negative/12 text-negative live-pulse flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.68rem] font-bold tracking-wide uppercase">
             <span className="bg-negative h-1.5 w-1.5 rounded-full" />
-            LIVE
+            Live
           </span>
         )}
         {upcoming && !live && (
-          <span className="bg-accent-soft text-accent shrink-0 rounded-full px-2.5 py-1 text-xs font-medium">
-            Upcoming
+          <span className="bg-accent-soft text-accent shrink-0 rounded-full px-2.5 py-1 text-[0.68rem] font-semibold tracking-wide uppercase">
+            Soon
           </span>
         )}
       </div>
@@ -72,17 +81,17 @@ export function MatchFeedCard({ fixture, market }: MatchFeedCardProps) {
       </p>
 
       {market?.found && polyOutcome && (
-        <div className="border-border mt-auto flex items-center justify-between rounded-lg border bg-surface-elevated/50 px-3 py-2">
+        <div className="border-border mt-auto flex items-center justify-between rounded-xl border bg-surface-elevated/60 px-3 py-2.5">
           <span className="label">Polymarket</span>
-          <span className="font-mono text-xs font-medium">
+          <span className="font-mono text-xs font-semibold">
             {polyOutcome.label}{" "}
             <span className="text-accent">${polyOutcome.price.toFixed(2)}</span>
           </span>
         </div>
       )}
 
-      <span className="text-accent mt-4 text-xs font-medium opacity-0 transition-opacity group-hover:opacity-100">
-        View full analysis →
+      <span className="text-accent mt-4 text-xs font-semibold tracking-wide uppercase opacity-0 transition-opacity group-hover:opacity-100">
+        Open analysis →
       </span>
     </Link>
   );
@@ -90,9 +99,9 @@ export function MatchFeedCard({ fixture, market }: MatchFeedCardProps) {
 
 function StatPill({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-surface-elevated/60 rounded-lg px-2.5 py-2 text-center">
+    <div className="rounded-xl border border-border bg-surface-elevated/50 px-2.5 py-2 text-center">
       <p className="label mb-0.5">{label}</p>
-      <p className="text-sm font-semibold">{value}</p>
+      <p className="font-mono text-sm font-semibold">{value}</p>
     </div>
   );
 }

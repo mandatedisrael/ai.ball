@@ -156,7 +156,7 @@ export default function MatchDetailPage() {
           <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-muted mb-2 text-sm">{fixture.league.name}</p>
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
                 {fixture.homeTeam.name}
                 <span className="text-muted mx-2 font-normal">vs</span>
                 {fixture.awayTeam.name}
@@ -226,7 +226,7 @@ export default function MatchDetailPage() {
 
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border bg-surface px-4 py-3 text-center">
+    <div className="rounded-xl border border-border bg-surface-elevated/50 px-4 py-3 text-center">
       <p className="label mb-1">{label}</p>
       <p className="text-xl font-bold capitalize">{value}</p>
     </div>

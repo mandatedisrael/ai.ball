@@ -11,11 +11,7 @@ import {
   YAxis,
 } from "recharts";
 
-import {
-  CHART_GRID_COLOR,
-  CHART_TICK_COLOR,
-  CHART_TOOLTIP_STYLE,
-} from "@/components/charts/chart-theme";
+import { useChartTheme } from "@/hooks/use-chart-theme";
 import type { ProbabilityComparison } from "@/types/analysis";
 
 interface ProbabilityChartProps {
@@ -23,6 +19,7 @@ interface ProbabilityChartProps {
 }
 
 export function ProbabilityChart({ comparisons }: ProbabilityChartProps) {
+  const chartTheme = useChartTheme();
   const data = comparisons.map((row) => ({
     outcome: row.label.replace(" Win", ""),
     model: Number((row.model * 100).toFixed(1)),
@@ -38,10 +35,10 @@ export function ProbabilityChart({ comparisons }: ProbabilityChartProps) {
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} barGap={8}>
-            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
-            <XAxis dataKey="outcome" tick={{ fontSize: 12, fill: CHART_TICK_COLOR }} />
-            <YAxis unit="%" tick={{ fontSize: 12, fill: CHART_TICK_COLOR }} />
-            <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+            <XAxis dataKey="outcome" tick={{ fontSize: 12, fill: chartTheme.tick }} />
+            <YAxis unit="%" tick={{ fontSize: 12, fill: chartTheme.tick }} />
+            <Tooltip contentStyle={chartTheme.tooltip} />
             <Legend />
             <Bar dataKey="model" name="AI Model" fill="#16a34a" radius={[4, 4, 0, 0]} />
             <Bar dataKey="market" name="Polymarket" fill="#0369a1" radius={[4, 4, 0, 0]} />

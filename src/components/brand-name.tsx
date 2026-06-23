@@ -4,7 +4,7 @@ interface BrandNameProps {
 
 export function BrandName({ className = "" }: BrandNameProps) {
   return (
-    <span className={`font-semibold tracking-tight ${className}`}>
+    <span className={`font-display font-bold tracking-tight ${className}`}>
       match<span className="text-accent">⚽</span>nalyst
     </span>
   );

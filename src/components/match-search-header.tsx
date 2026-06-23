@@ -25,31 +25,31 @@ export function MatchSearchHeader({
   const isWorldCup = selectedLeagueId === WORLD_CUP_LEAGUE_ID;
 
   return (
-    <section className="mb-12">
-      <div className="mb-10 text-center">
-        <span className="bg-accent/10 text-accent mb-4 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide">
-          <span className="bg-accent h-1.5 w-1.5 rounded-full" />
-          FIFA World Cup 2026
-        </span>
-        <h1 className="mb-3 text-4xl font-bold tracking-tight sm:text-5xl">
-          Find your match.
-          <span className="text-accent"> Analyze with AI.</span>
+    <section className="mb-14">
+      <div className="animate-fade-up mb-12 text-center">
+        <p className="label mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-1.5">
+          <span className="analysis-live-dot" />
+          World Cup 2026 · Live data
+        </p>
+        <h1 className="font-display mb-4 text-[2.6rem] leading-[1.05] font-extrabold tracking-tight sm:text-6xl">
+          Every match,
+          <span className="text-accent"> decoded.</span>
         </h1>
-        <p className="text-muted mx-auto max-w-lg text-base leading-relaxed">
-          Live World Cup fixtures, deep AI probabilities, and Polymarket
-          context — powered by 0G with TEE-verified inference.
+        <p className="text-muted mx-auto max-w-xl text-base leading-relaxed sm:text-lg">
+          Probabilities, form, injuries, and Polymarket context — analyzed inside
+          0G&apos;s TEE-verified compute.
         </p>
       </div>
 
-      <div className="mx-auto max-w-3xl">
-        <div className="card focus-within:border-accent/40 focus-within:shadow-[0_0_40px_-12px_var(--glow)] p-2 transition-shadow focus-within:shadow-accent/10">
+      <div className="animate-fade-up stagger-1 mx-auto max-w-3xl">
+        <div className="card focus-within:border-accent/35 p-2 focus-within:shadow-[0_0_48px_-14px_var(--glow)]">
           <div className="relative">
             <svg
-              className="text-accent pointer-events-none absolute top-1/2 left-5 h-5 w-5 -translate-y-1/2 sm:left-6 sm:h-6 sm:w-6"
+              className="text-muted pointer-events-none absolute top-1/2 left-5 h-5 w-5 -translate-y-1/2"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
-              strokeWidth={2}
+              strokeWidth={1.8}
             >
               <path
                 strokeLinecap="round"
@@ -61,9 +61,9 @@ export function MatchSearchHeader({
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && onSearch()}
-              placeholder="Search teams — Brazil, France, Argentina…"
+              placeholder="Brazil, France, England…"
               autoFocus
-              className="placeholder:text-muted/40 w-full rounded-2xl bg-transparent py-5 pr-5 pl-14 text-lg font-medium outline-none sm:py-6 sm:pl-16 sm:text-xl"
+              className="placeholder:text-muted/50 w-full rounded-xl bg-transparent py-5 pr-5 pl-14 text-lg font-medium outline-none sm:py-6 sm:text-xl"
             />
           </div>
         </div>
@@ -72,7 +72,7 @@ export function MatchSearchHeader({
           <select
             value={selectedLeagueId ?? WORLD_CUP_LEAGUE_ID}
             onChange={(e) => onLeagueChange(Number(e.target.value))}
-            className="border-border text-foreground rounded-xl border bg-surface-elevated/60 px-4 py-3 text-sm font-medium outline-none"
+            className="border-border text-foreground rounded-full border bg-surface px-5 py-3 text-sm font-medium outline-none focus:border-accent/40"
           >
             {leagues.map((league) => (
               <option key={league.id} value={league.id}>
@@ -85,18 +85,18 @@ export function MatchSearchHeader({
             type="button"
             onClick={onSearch}
             disabled={isSearching}
-            className="bg-accent hover:bg-accent/90 rounded-xl px-8 py-3 text-sm font-semibold text-zinc-950 transition disabled:opacity-50 sm:min-w-[140px]"
+            className="btn-primary px-8 py-3 text-sm sm:min-w-[148px]"
           >
-            {isSearching ? "Searching…" : "Search matches"}
+            {isSearching ? "Searching…" : "Find matches"}
           </button>
         </div>
 
-        <p className="text-muted mt-3 text-center text-xs">
+        <p className="text-muted mt-4 text-center text-xs">
           {query.trim()
-            ? "We’ll find the team’s closest next match across all competitions"
+            ? "We’ll surface the team’s nearest upcoming fixture"
             : isWorldCup
-              ? "Showing live and upcoming World Cup fixtures by default"
-              : "Browse fixtures or search any team by name"}
+              ? "Browsing World Cup fixtures — or search any side by name"
+              : "Pick a league or search by team"}
         </p>
       </div>
     </section>

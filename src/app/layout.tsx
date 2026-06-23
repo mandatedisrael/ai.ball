@@ -1,22 +1,31 @@
 import type { Metadata } from "next";
-import { Geist_Mono } from "next/font/google";
-import { Inter } from "next/font/google";
+import { DM_Sans, Geist_Mono, Syne } from "next/font/google";
 
 import { BRAND_TAGLINE, BRAND_TITLE } from "@/components/brand-name";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { ThemeProvider } from "@/components/theme-provider";
 
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const syne = Syne({
+  variable: "--font-syne",
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+const themeInitScript = `(function(){try{var k='matchanalyst-theme';var s=localStorage.getItem(k);var d=window.matchMedia('(prefers-color-scheme: dark)').matches;var t=s==='light'||s==='dark'?s:(d?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){}})();`;
 
 export const metadata: Metadata = {
   title: `${BRAND_TITLE} — ${BRAND_TAGLINE}`,
@@ -32,15 +41,21 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+      className={`${dmSans.variable} ${syne.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="flex min-h-full flex-col">
-        <div className="mesh-bg pointer-events-none fixed inset-0" />
-        <div className="relative flex min-h-full flex-1 flex-col">
-          <SiteHeader />
-          {children}
-          <SiteFooter />
-        </div>
+        <ThemeProvider>
+          <div className="app-bg pointer-events-none fixed inset-0" />
+          <div className="relative flex min-h-full flex-1 flex-col">
+            <SiteHeader />
+            {children}
+            <SiteFooter />
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

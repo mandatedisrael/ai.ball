@@ -178,7 +178,7 @@ export default function HomePage() {
       {!spotlight && (
         <section className="mt-8">
           <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">
+            <h2 className="font-display text-xl font-bold">
               {isSearching ? "Looking up next match…" : sectionTitle}
             </h2>
             {!isSearching && fixtures.length > 0 && (
@@ -211,11 +211,12 @@ export default function HomePage() {
 
           {showFeedGrid && (
             <div className="grid gap-4 sm:grid-cols-2">
-              {fixtures.map((fixture) => (
+              {fixtures.map((fixture, index) => (
                 <MatchFeedCard
                   key={fixture.id}
                   fixture={fixture}
                   market={markets[fixture.id]}
+                  index={index}
                 />
               ))}
             </div>
