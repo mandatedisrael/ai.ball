@@ -1,0 +1,31 @@
+{
+  "name": "match-analyst",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Polymarket Football AI Analyst — AI-powered match analysis with probability estimates and Polymarket market context",
+  "author": "mandatedisrael",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mandatedisrael/matchAnalyst.git"
+  },
+  "keywords": [
+    "football",
+    "soccer",
+    "polymarket",
+    "prediction-markets",
+    "0g-compute",
+    "ai-analyst"
+  ],
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  }
+}
