@@ -1,8 +1,4 @@
-import {
-  getSeasonForLeague,
-  SUPPORTED_LEAGUES,
-  WORLD_CUP_LEAGUE_ID,
-} from "@/lib/leagues";
+import { WORLD_CUP_LEAGUE_ID } from "@/lib/leagues";
 import type { FixtureSummary } from "@/types/fixture";
 import { footballFetch } from "@/services/football/client";
 
@@ -65,6 +61,28 @@ function mapFixture(item: ApiFootballFixture): FixtureSummary {
   };
 }
 
+function enumerateDates(from: string, to: string): string[] {
+  const dates: string[] = [];
+  const cursor = new Date(`${from}T12:00:00Z`);
+  const end = new Date(`${to}T12:00:00Z`);
+
+  while (cursor <= end) {
+    dates.push(cursor.toISOString().slice(0, 10));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+
+  return dates;
+}
+
+async function fetchFixturesByDate(date: string): Promise<FixtureSummary[]> {
+  const data = await footballFetch<FixturesResponse>("/fixtures", {
+    date,
+    timezone: "UTC",
+  });
+
+  return data.response.map(mapFixture);
+}
+
 async function fetchLiveFixtures(leagueId?: number): Promise<FixtureSummary[]> {
   const data = await footballFetch<FixturesResponse>("/fixtures", {
     live: "all",
@@ -78,21 +96,22 @@ async function fetchLiveFixtures(leagueId?: number): Promise<FixtureSummary[]> {
   return fixtures;
 }
 
-async function fetchLeagueFixtures(
-  leagueId: number,
+async function fetchFixturesInRange(
   from: string,
   to: string,
+  leagueId?: number,
 ): Promise<FixtureSummary[]> {
-  const season = getSeasonForLeague(leagueId);
-  const data = await footballFetch<FixturesResponse>("/fixtures", {
-    league: leagueId,
-    season,
-    from,
-    to,
-    timezone: "UTC",
-  });
+  const dates = enumerateDates(from, to);
+  const batches = await Promise.all(
+    dates.map((date) => fetchFixturesByDate(date).catch(() => [])),
+  );
 
-  return data.response.map(mapFixture);
+  let fixtures = batches.flat();
+  if (leagueId) {
+    fixtures = fixtures.filter((fixture) => fixture.league.id === leagueId);
+  }
+
+  return fixtures;
 }
 
 function dedupeFixtures(fixtures: FixtureSummary[]): FixtureSummary[] {
@@ -150,27 +169,16 @@ export async function searchFixtures(options: {
     .slice(0, 10);
 
   const defaultToWorldCup = !options.query && !options.leagueId;
-  const leagueIds = options.leagueId
-    ? [options.leagueId]
-    : options.query
-      ? SUPPORTED_LEAGUES.map((league) => league.id)
-      : [WORLD_CUP_LEAGUE_ID];
+  const leagueFilter = options.leagueId
+    ?? (defaultToWorldCup ? WORLD_CUP_LEAGUE_ID : undefined);
 
-  const liveLeagueFilter = defaultToWorldCup ? WORLD_CUP_LEAGUE_ID : options.leagueId;
-
-  const [liveFixtures, ...batches] = await Promise.all([
-    fetchLiveFixtures(liveLeagueFilter).catch(() => []),
-    ...leagueIds.map((leagueId) =>
-      fetchLeagueFixtures(leagueId, from, to).catch(() => []),
-    ),
+  const [liveFixtures, rangedFixtures] = await Promise.all([
+    fetchLiveFixtures(leagueFilter).catch(() => []),
+    fetchFixturesInRange(from, to, leagueFilter).catch(() => []),
   ]);
 
-  const merged = dedupeFixtures([...liveFixtures, ...batches.flat()]);
-  return filterFixtures(
-    merged,
-    options.query,
-    options.leagueId ?? (defaultToWorldCup ? WORLD_CUP_LEAGUE_ID : undefined),
-  );
+  const merged = dedupeFixtures([...liveFixtures, ...rangedFixtures]);
+  return filterFixtures(merged, options.query, leagueFilter);
 }
 
 export async function getFixtureById(
