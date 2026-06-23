@@ -1,6 +1,3 @@
-import { createZGComputeNetworkBroker } from "@0gfoundation/0g-compute-ts-sdk";
-import { ethers } from "ethers";
-
 import { env, hasZerogCompute, hasZerogRouter } from "@/lib/env";
 import {
   buildFollowUpPrompt,
@@ -10,17 +7,32 @@ import type { AnalysisResult } from "@/types/analysis";
 
 import { routerChatCompletion } from "./router";
 
-let brokerPromise: ReturnType<typeof createZGComputeNetworkBroker> | null = null;
+type Broker = {
+  inference: {
+    listService: () => Promise<Array<{ serviceType?: string; provider?: string }>>;
+    getServiceMetadata: (provider: string) => Promise<{ endpoint: string; model: string }>;
+    getRequestHeaders: (provider: string) => Promise<Record<string, string>>;
+  };
+};
 
-async function getBroker() {
+let brokerPromise: Promise<Broker> | null = null;
+
+async function getBroker(): Promise<Broker> {
   if (!env.zerogPrivateKey) {
     throw new Error("ZEROG_PRIVATE_KEY is not configured");
   }
 
   if (!brokerPromise) {
-    const provider = new ethers.JsonRpcProvider(env.zerogRpcUrl);
-    const wallet = new ethers.Wallet(env.zerogPrivateKey, provider);
-    brokerPromise = createZGComputeNetworkBroker(wallet);
+    brokerPromise = (async () => {
+      const [{ createZGComputeNetworkBroker }, { ethers }] = await Promise.all([
+        import("@0gfoundation/0g-compute-ts-sdk"),
+        import("ethers"),
+      ]);
+
+      const provider = new ethers.JsonRpcProvider(env.zerogRpcUrl);
+      const wallet = new ethers.Wallet(env.zerogPrivateKey, provider);
+      return createZGComputeNetworkBroker(wallet) as unknown as Broker;
+    })();
   }
 
   return brokerPromise;

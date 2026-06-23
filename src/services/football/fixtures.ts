@@ -165,9 +165,9 @@ async function findFixtureInRecentDates(
 ): Promise<FixtureSummary | null> {
   const dates: string[] = [];
   const cursor = new Date();
-  cursor.setUTCDate(cursor.getUTCDate() - 2);
+  cursor.setUTCDate(cursor.getUTCDate() - 30);
 
-  for (let i = 0; i < 16; i += 1) {
+  for (let i = 0; i < 38; i += 1) {
     dates.push(cursor.toISOString().slice(0, 10));
     cursor.setUTCDate(cursor.getUTCDate() + 1);
   }

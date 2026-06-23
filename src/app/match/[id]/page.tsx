@@ -78,17 +78,26 @@ export default function MatchDetailPage() {
         }
         if (cancelled) return;
 
+        const resolvedFixture: FixtureSummary | null =
+          fixtureRes.ok && fixtureData.fixture
+            ? fixtureData.fixture
+            : stashedFixture;
+
         const marketRes = await fetch(`/api/fixtures/${fixtureId}/market`);
         const marketData = await marketRes.json();
         if (!cancelled && marketRes.ok) {
           setMarket(marketData.market ?? null);
         }
 
+        if (!resolvedFixture) {
+          throw new Error("Fixture not found");
+        }
+
         setIsAnalyzing(true);
         setProgressStep("fixture");
         setProgressMessage("Starting in-depth analysis…");
 
-        await runAnalysisStream(fixtureId, {
+        await runAnalysisStream(fixtureId, resolvedFixture, {
           onProgress: (step, message) => {
             if (cancelled) return;
             setProgressStep(step);

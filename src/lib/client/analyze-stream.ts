@@ -1,8 +1,10 @@
 import type { AnalysisResult } from "@/types/analysis";
+import type { FixtureSummary } from "@/types/fixture";
 import type { AnalysisProgressStep, AnalysisStreamEvent } from "@/types/stream";
 
 export async function runAnalysisStream(
   fixtureId: number,
+  fixture: FixtureSummary | undefined,
   handlers: {
     onProgress: (step: AnalysisProgressStep, message: string) => void;
     onResult: (result: AnalysisResult) => void;
@@ -15,7 +17,7 @@ export async function runAnalysisStream(
       "Content-Type": "application/json",
       Accept: "text/event-stream",
     },
-    body: JSON.stringify({ fixtureId }),
+    body: JSON.stringify({ fixtureId, fixture }),
   });
 
   if (!response.ok) {

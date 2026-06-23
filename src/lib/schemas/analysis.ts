@@ -74,8 +74,32 @@ export const analystOutputSchema = z.object({
 
 export type AnalystOutput = z.infer<typeof analystOutputSchema>;
 
+export const fixtureSummarySchema = z.object({
+  id: z.number().int().positive(),
+  date: z.string(),
+  league: z.object({
+    id: z.number().int(),
+    name: z.string(),
+    country: z.string(),
+    logo: z.string().optional(),
+  }),
+  homeTeam: z.object({
+    id: z.number().int(),
+    name: z.string(),
+    logo: z.string().optional(),
+  }),
+  awayTeam: z.object({
+    id: z.number().int(),
+    name: z.string(),
+    logo: z.string().optional(),
+  }),
+  venue: z.string().optional(),
+  status: z.string(),
+});
+
 export const analyzeRequestSchema = z.object({
   fixtureId: z.number().int().positive(),
+  fixture: fixtureSummarySchema.optional(),
 });
 
 export const fixtureSearchSchema = z.object({

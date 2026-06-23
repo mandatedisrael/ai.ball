@@ -9,6 +9,7 @@ import { resolvePolymarketMarket } from "@/services/polymarket/markets";
 import { fetchWeatherForVenue } from "@/services/weather/openweather";
 import { runZerogAnalysis } from "@/services/zerog/compute";
 import type { AnalysisResult } from "@/types/analysis";
+import type { FixtureSummary } from "@/types/fixture";
 import type { AnalysisProgressStep } from "@/types/stream";
 
 export type ProgressCallback = (
@@ -19,13 +20,17 @@ export type ProgressCallback = (
 export async function analyzeFixture(
   fixtureId: number,
   onProgress?: ProgressCallback,
+  knownFixture?: FixtureSummary,
 ): Promise<AnalysisResult> {
   if (!hasZerogCompute()) {
     throw new Error("0G Compute is not configured. Set ZEROG_ROUTER_API_KEY.");
   }
 
   onProgress?.("fixture", "Resolving fixture…");
-  const fixture = await getFixtureById(fixtureId);
+  const fixture =
+    knownFixture && knownFixture.id === fixtureId
+      ? knownFixture
+      : await getFixtureById(fixtureId);
   if (!fixture) {
     throw new Error(`Fixture ${fixtureId} not found`);
   }
