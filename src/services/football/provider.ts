@@ -15,7 +15,9 @@ import {
   type FixtureSearchResult,
 } from "./fixtures";
 import { buildMatchDataBundle as buildApiFootballBundle } from "./match-data";
+import { getApiFootballMatchDetail } from "./match-detail";
 import { findTeamNextFixture as findApiFootballTeamNextFixture } from "./teams";
+import { getFootballDataMatchDetail } from "../football-data/match-detail";
 
 export type { FixtureSearchResult, TeamSpotlight };
 
@@ -53,4 +55,11 @@ export async function findTeamNextFixture(
     return findFootballDataTeamNextFixture(query);
   }
   return findApiFootballTeamNextFixture(query);
+}
+
+export async function getMatchDetail(fixtureId: number) {
+  if (getFootballProvider() === "football-data") {
+    return getFootballDataMatchDetail(fixtureId);
+  }
+  return getApiFootballMatchDetail(fixtureId);
 }

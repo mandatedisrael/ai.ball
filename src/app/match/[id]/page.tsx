@@ -8,10 +8,20 @@ import { AnalysisProgress } from "@/components/analysis-progress";
 import { AnalysisResultsPanel } from "@/components/analysis-results-panel";
 import { AskAnalyst } from "@/components/ask-analyst";
 import { BetMarketRail } from "@/components/bet-market-rail";
+import { MatchLineups } from "@/components/match-lineups";
+import { MatchLivePanel } from "@/components/match-live-panel";
 
 import { runAnalysisStream } from "@/lib/client/analyze-stream";
 import { readStashedFixture } from "@/lib/client/fixture-session";
 import { saveAnalysisResult } from "@/lib/client/local-store";
+import {
+  formatMatchClock,
+  formatStageLabel,
+  hasDisplayableScore,
+  hasLineups,
+  hasLiveFeed,
+  isMatchLiveStatus,
+} from "@/lib/match-live";
 import {
   buildMatchPreview,
   isFixtureLive,
@@ -19,6 +29,7 @@ import {
 } from "@/lib/match-preview";
 import type { AnalysisResult } from "@/types/analysis";
 import type { FixtureSummary } from "@/types/fixture";
+import type { MatchLiveDetail } from "@/types/match-detail";
 import type { PolymarketMarketContext } from "@/types/polymarket";
 import type { AnalysisProgressStep } from "@/types/stream";
 
@@ -38,6 +49,33 @@ export default function MatchDetailPage() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [matchDetail, setMatchDetail] = useState<MatchLiveDetail | null>(null);
+
+  const loadMatchDetail = useCallback(async () => {
+    if (!Number.isFinite(fixtureId) || fixtureId <= 0) return null;
+
+    try {
+      const response = await fetch(`/api/fixtures/${fixtureId}/detail`, {
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok) return null;
+
+      const detail = data.detail as MatchLiveDetail;
+      setMatchDetail(detail);
+      setFixture((current) =>
+        current
+          ? {
+              ...current,
+              status: detail.status || current.status,
+            }
+          : current,
+      );
+      return detail;
+    } catch {
+      return null;
+    }
+  }, [fixtureId]);
 
   const saveAnalysis = useCallback(() => {
     if (!result) return;
@@ -131,8 +169,28 @@ export default function MatchDetailPage() {
     };
   }, [fixtureId]);
 
+  useEffect(() => {
+    if (!Number.isFinite(fixtureId) || fixtureId <= 0) return;
+    void loadMatchDetail();
+  }, [fixtureId, loadMatchDetail]);
+
+  useEffect(() => {
+    const status = matchDetail?.status ?? fixture?.status;
+    if (!status || !isMatchLiveStatus(status)) return;
+
+    const interval = window.setInterval(() => {
+      void loadMatchDetail();
+    }, 30_000);
+
+    return () => window.clearInterval(interval);
+  }, [fixture?.status, loadMatchDetail, matchDetail?.status]);
+
   const preview = fixture ? buildMatchPreview(fixture) : null;
-  const live = fixture ? isFixtureLive(fixture) : false;
+  const live = matchDetail
+    ? isMatchLiveStatus(matchDetail.status)
+    : fixture
+      ? isFixtureLive(fixture)
+      : false;
   const upcoming = fixture ? isFixtureUpcoming(fixture) : false;
   const showBetRail =
     !!fixture &&
@@ -167,6 +225,18 @@ export default function MatchDetailPage() {
                 <span className="text-muted mx-2 font-normal">vs</span>
                 {fixture.awayTeam.name}
               </h1>
+              {matchDetail && hasDisplayableScore(matchDetail) && (
+                <p className="mt-3 font-mono text-2xl font-bold tracking-tight sm:text-3xl">
+                  {matchDetail.score.home}
+                  <span className="text-muted mx-2 font-normal">–</span>
+                  {matchDetail.score.away}
+                  {live && formatMatchClock(matchDetail) && (
+                    <span className="text-negative ml-3 text-sm font-semibold">
+                      {formatMatchClock(matchDetail)}
+                    </span>
+                  )}
+                </p>
+              )}
             </div>
             <div className="flex flex-col items-end gap-2.5">
               <div className="flex gap-2">
@@ -195,6 +265,9 @@ export default function MatchDetailPage() {
           <p className="text-muted text-sm">
             {new Date(fixture.date).toLocaleString()} ·{" "}
             {fixture.venue ?? "Venue TBD"}
+            {matchDetail && formatStageLabel(matchDetail) && (
+              <> · {formatStageLabel(matchDetail)}</>
+            )}
           </p>
 
           {preview && !result && !isAnalyzing && !progressStep && (
@@ -205,6 +278,27 @@ export default function MatchDetailPage() {
             </div>
           )}
         </header>
+      )}
+
+      {fixture &&
+        matchDetail &&
+        (hasLiveFeed(matchDetail) || hasDisplayableScore(matchDetail)) && (
+        <div className="mb-6">
+          <MatchLivePanel
+            detail={matchDetail}
+            homeTeam={fixture.homeTeam.name}
+            awayTeam={fixture.awayTeam.name}
+          />
+        </div>
+      )}
+
+      {matchDetail && hasLineups(matchDetail) && (
+        <div className="mb-6">
+          <MatchLineups
+            home={matchDetail.lineups.home}
+            away={matchDetail.lineups.away}
+          />
+        </div>
       )}
 
       {!result && (isBootstrapping || isAnalyzing || progressStep) && (
