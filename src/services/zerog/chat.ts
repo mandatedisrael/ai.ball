@@ -1,17 +1,19 @@
-import { hasZerogCompute } from "@/lib/env";
+import { createZGComputeNetworkBroker } from "@0gfoundation/0g-compute-ts-sdk";
+import { ethers } from "ethers";
+
+import { env, hasZerogCompute, hasZerogRouter } from "@/lib/env";
 import {
   buildFollowUpPrompt,
   FOLLOW_UP_SYSTEM_PROMPT,
 } from "@/lib/prompts/follow-up";
 import type { AnalysisResult } from "@/types/analysis";
-import { createZGComputeNetworkBroker } from "@0gfoundation/0g-compute-ts-sdk";
-import { ethers } from "ethers";
-import { env } from "@/lib/env";
+
+import { routerChatCompletion } from "./router";
 
 let brokerPromise: ReturnType<typeof createZGComputeNetworkBroker> | null = null;
 
 async function getBroker() {
-  if (!hasZerogCompute()) {
+  if (!env.zerogPrivateKey) {
     throw new Error("ZEROG_PRIVATE_KEY is not configured");
   }
 
@@ -24,7 +26,7 @@ async function getBroker() {
   return brokerPromise;
 }
 
-async function runZerogChat(prompt: string): Promise<string> {
+async function runBrokerChat(prompt: string): Promise<string> {
   const broker = await getBroker();
   const services = await broker.inference.listService();
   const chatbot = services.find((s) => s.serviceType === "chatbot") ?? services[0];
@@ -67,6 +69,20 @@ async function runZerogChat(prompt: string): Promise<string> {
   };
 
   return data.choices[0]?.message?.content?.trim() ?? "No response generated.";
+}
+
+async function runZerogChat(prompt: string): Promise<string> {
+  if (hasZerogRouter()) {
+    return routerChatCompletion({
+      messages: [
+        { role: "system", content: FOLLOW_UP_SYSTEM_PROMPT },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.4,
+    });
+  }
+
+  return runBrokerChat(prompt);
 }
 
 function runDemoChat(question: string, result: AnalysisResult): string {

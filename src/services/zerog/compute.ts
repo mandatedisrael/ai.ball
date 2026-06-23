@@ -1,7 +1,7 @@
 import { createZGComputeNetworkBroker } from "@0gfoundation/0g-compute-ts-sdk";
 import { ethers } from "ethers";
 
-import { env, hasZerogCompute } from "@/lib/env";
+import { env, hasZerogRouter, hasZerogCompute } from "@/lib/env";
 import {
   ANALYST_SYSTEM_PROMPT,
   buildAnalystUserPrompt,
@@ -11,10 +11,12 @@ import type { AnalystOutput } from "@/lib/schemas/analysis";
 import type { MatchDataBundle } from "@/types/fixture";
 import type { PolymarketMarketContext } from "@/types/polymarket";
 
+import { routerChatCompletion } from "./router";
+
 let brokerPromise: ReturnType<typeof createZGComputeNetworkBroker> | null = null;
 
 async function getBroker() {
-  if (!hasZerogCompute()) {
+  if (!env.zerogPrivateKey) {
     throw new Error("ZEROG_PRIVATE_KEY is not configured");
   }
 
@@ -38,7 +40,7 @@ function extractJsonPayload(text: string): AnalystOutput {
   return analystOutputSchema.parse(parsed);
 }
 
-export async function runZerogAnalysis(
+async function runBrokerAnalysis(
   matchData: MatchDataBundle,
   polymarket?: PolymarketMarketContext,
 ): Promise<AnalystOutput> {
@@ -93,6 +95,40 @@ export async function runZerogAnalysis(
   }
 
   return extractJsonPayload(content);
+}
+
+async function runRouterAnalysis(
+  matchData: MatchDataBundle,
+  polymarket?: PolymarketMarketContext,
+): Promise<AnalystOutput> {
+  const content = await routerChatCompletion({
+    messages: [
+      { role: "system", content: ANALYST_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: buildAnalystUserPrompt(matchData, polymarket),
+      },
+    ],
+    temperature: 0.3,
+    jsonMode: true,
+  });
+
+  return extractJsonPayload(content);
+}
+
+export async function runZerogAnalysis(
+  matchData: MatchDataBundle,
+  polymarket?: PolymarketMarketContext,
+): Promise<AnalystOutput> {
+  if (!hasZerogCompute()) {
+    throw new Error("0G Compute is not configured");
+  }
+
+  if (hasZerogRouter()) {
+    return runRouterAnalysis(matchData, polymarket);
+  }
+
+  return runBrokerAnalysis(matchData, polymarket);
 }
 
 export function runDemoAnalysis(
