@@ -91,11 +91,13 @@ export function MatchSearchHeader({
           </button>
         </div>
 
-        {isWorldCup && !query && (
-          <p className="text-muted mt-3 text-center text-xs">
-            Showing live and upcoming World Cup fixtures by default
-          </p>
-        )}
+        <p className="text-muted mt-3 text-center text-xs">
+          {query.trim()
+            ? "We’ll find the team’s closest next match across all competitions"
+            : isWorldCup
+              ? "Showing live and upcoming World Cup fixtures by default"
+              : "Browse fixtures or search any team by name"}
+        </p>
       </div>
     </section>
   );

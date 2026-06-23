@@ -6,21 +6,25 @@ import { MatchFeedCard } from "@/components/match-feed-card";
 import { MatchSearchHeader } from "@/components/match-search-header";
 import { SavedAnalyses } from "@/components/saved-analyses";
 import { ServiceStatus } from "@/components/service-status";
+import { TeamSpotlightCard } from "@/components/team-spotlight-card";
 import { useSavedAnalyses } from "@/hooks/use-local-store";
 import { deleteSavedAnalysis } from "@/lib/client/local-store";
 import { WORLD_CUP_LEAGUE_ID } from "@/lib/leagues";
 import type { SupportedLeague } from "@/lib/leagues";
+import type { TeamSpotlight } from "@/services/football/teams";
 import type { AnalysisResult } from "@/types/analysis";
 import type { FixtureSummary } from "@/types/fixture";
 import type { PolymarketMarketContext } from "@/types/polymarket";
 
 export default function HomePage() {
   const [query, setQuery] = useState("");
+  const [activeQuery, setActiveQuery] = useState("");
   const [leagues, setLeagues] = useState<SupportedLeague[]>([]);
   const [selectedLeagueId, setSelectedLeagueId] = useState<number>(
     WORLD_CUP_LEAGUE_ID,
   );
   const [fixtures, setFixtures] = useState<FixtureSummary[]>([]);
+  const [spotlight, setSpotlight] = useState<TeamSpotlight | null>(null);
   const [markets, setMarkets] = useState<
     Record<number, PolymarketMarketContext>
   >({});
@@ -47,11 +51,19 @@ export default function HomePage() {
   const searchFixtures = useCallback(async () => {
     setIsSearching(true);
     setError(null);
+    setSpotlight(null);
 
     try {
       const params = new URLSearchParams();
-      if (query.trim()) params.set("query", query.trim());
-      params.set("leagueId", String(selectedLeagueId));
+      const trimmed = query.trim();
+
+      if (trimmed) {
+        params.set("query", trimmed);
+        setActiveQuery(trimmed);
+      } else {
+        params.set("leagueId", String(selectedLeagueId));
+        setActiveQuery("");
+      }
 
       const response = await fetch(`/api/fixtures/search?${params.toString()}`);
       const data = await response.json();
@@ -61,8 +73,15 @@ export default function HomePage() {
       }
 
       const nextFixtures: FixtureSummary[] = data.fixtures ?? [];
+      const nextSpotlight: TeamSpotlight | null = data.spotlight ?? null;
+
       setFixtures(nextFixtures);
-      void loadMarkets(nextFixtures);
+      setSpotlight(nextSpotlight);
+
+      const marketTargets = nextSpotlight
+        ? [nextSpotlight.nextFixture, ...nextFixtures]
+        : nextFixtures;
+      void loadMarkets(marketTargets);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Fixture search failed");
     } finally {
@@ -102,6 +121,8 @@ export default function HomePage() {
           }
           const nextFixtures: FixtureSummary[] = data.fixtures ?? [];
           setFixtures(nextFixtures);
+          setSpotlight(null);
+          setActiveQuery("");
           void loadMarkets(nextFixtures);
         }
       } catch (err) {
@@ -121,10 +142,13 @@ export default function HomePage() {
     };
   }, [loadMarkets]);
 
-  const sectionTitle =
-    selectedLeagueId === WORLD_CUP_LEAGUE_ID
+  const sectionTitle = activeQuery
+    ? `Results for “${activeQuery}”`
+    : selectedLeagueId === WORLD_CUP_LEAGUE_ID
       ? "World Cup 2026"
       : leagues.find((l) => l.id === selectedLeagueId)?.name ?? "Matches";
+
+  const showFeedGrid = !spotlight && fixtures.length > 0;
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 py-10 sm:px-8">
@@ -138,51 +162,66 @@ export default function HomePage() {
         onSearch={searchFixtures}
       />
 
+      {spotlight && !isSearching && (
+        <TeamSpotlightCard
+          spotlight={spotlight}
+          market={markets[spotlight.nextFixture.id]}
+        />
+      )}
+
       <ServiceStatus />
 
       {error && (
         <div className="card text-negative mt-4 p-4 text-sm">{error}</div>
       )}
 
-      <section className="mt-8">
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">
-            {isSearching ? "Loading matches…" : sectionTitle}
-          </h2>
-          {!isSearching && fixtures.length > 0 && (
-            <span className="text-muted text-sm">{fixtures.length} fixtures</span>
+      {!spotlight && (
+        <section className="mt-8">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">
+              {isSearching ? "Looking up next match…" : sectionTitle}
+            </h2>
+            {!isSearching && fixtures.length > 0 && (
+              <span className="text-muted text-sm">
+                {fixtures.length} fixtures
+              </span>
+            )}
+          </div>
+
+          {fixtures.length === 0 && !isSearching && !error && activeQuery && (
+            <div className="card py-16 text-center">
+              <p className="text-muted text-sm">
+                No upcoming match found for “{activeQuery}”. Try the full team
+                name or a different spelling.
+              </p>
+            </div>
           )}
-        </div>
 
-        {fixtures.length === 0 && !isSearching && !error && (
-          <div className="card py-16 text-center">
-            <p className="text-muted text-sm">
-              No fixtures found for this league. Try another search.
-            </p>
-          </div>
-        )}
+          {fixtures.length === 0 && !isSearching && !error && !activeQuery && (
+            <div className="card py-16 text-center">
+              <p className="text-muted text-sm">
+                No fixtures found for this league. Try another search.
+              </p>
+            </div>
+          )}
 
-        {isSearching && fixtures.length === 0 && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="card h-52 animate-pulse bg-surface-elevated/30"
-              />
-            ))}
-          </div>
-        )}
+          {isSearching && fixtures.length === 0 && !spotlight && (
+            <div className="card mx-auto max-w-3xl animate-pulse py-24" />
+          )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          {fixtures.map((fixture) => (
-            <MatchFeedCard
-              key={fixture.id}
-              fixture={fixture}
-              market={markets[fixture.id]}
-            />
-          ))}
-        </div>
-      </section>
+          {showFeedGrid && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {fixtures.map((fixture) => (
+                <MatchFeedCard
+                  key={fixture.id}
+                  fixture={fixture}
+                  market={markets[fixture.id]}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {savedItems.length > 0 && (
         <div className="mt-12">

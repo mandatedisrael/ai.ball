@@ -2,6 +2,19 @@ import { WORLD_CUP_LEAGUE_ID } from "@/lib/leagues";
 import type { FixtureSummary } from "@/types/fixture";
 import { footballFetch } from "@/services/football/client";
 
+import {
+  dedupeFixtures,
+  fetchFixturesByDate,
+  fetchLiveFixtures,
+  mapFixture,
+  sortFixtures,
+} from "./fixtures-shared";
+import {
+  filterTeamFixtures,
+  findTeamNextFixture,
+  type TeamSpotlight,
+} from "./teams";
+
 interface ApiFootballFixture {
   fixture: {
     id: number;
@@ -25,42 +38,6 @@ interface FixturesResponse {
   response: ApiFootballFixture[];
 }
 
-const LIVE_STATUSES = new Set([
-  "LIVE",
-  "1H",
-  "HT",
-  "2H",
-  "ET",
-  "BT",
-  "P",
-  "INT",
-]);
-
-function mapFixture(item: ApiFootballFixture): FixtureSummary {
-  return {
-    id: item.fixture.id,
-    date: item.fixture.date,
-    league: {
-      id: item.league.id,
-      name: item.league.name,
-      country: item.league.country,
-      logo: item.league.logo,
-    },
-    homeTeam: {
-      id: item.teams.home.id,
-      name: item.teams.home.name,
-      logo: item.teams.home.logo,
-    },
-    awayTeam: {
-      id: item.teams.away.id,
-      name: item.teams.away.name,
-      logo: item.teams.away.logo,
-    },
-    venue: item.fixture.venue?.name,
-    status: item.fixture.status.short,
-  };
-}
-
 function enumerateDates(from: string, to: string): string[] {
   const dates: string[] = [];
   const cursor = new Date(`${from}T12:00:00Z`);
@@ -72,28 +49,6 @@ function enumerateDates(from: string, to: string): string[] {
   }
 
   return dates;
-}
-
-async function fetchFixturesByDate(date: string): Promise<FixtureSummary[]> {
-  const data = await footballFetch<FixturesResponse>("/fixtures", {
-    date,
-    timezone: "UTC",
-  });
-
-  return data.response.map(mapFixture);
-}
-
-async function fetchLiveFixtures(leagueId?: number): Promise<FixtureSummary[]> {
-  const data = await footballFetch<FixturesResponse>("/fixtures", {
-    live: "all",
-  });
-
-  let fixtures = data.response.map(mapFixture);
-  if (leagueId) {
-    fixtures = fixtures.filter((fixture) => fixture.league.id === leagueId);
-  }
-
-  return fixtures;
 }
 
 async function fetchFixturesInRange(
@@ -112,23 +67,6 @@ async function fetchFixturesInRange(
   }
 
   return fixtures;
-}
-
-function dedupeFixtures(fixtures: FixtureSummary[]): FixtureSummary[] {
-  const byId = new Map<number, FixtureSummary>();
-  for (const fixture of fixtures) {
-    byId.set(fixture.id, fixture);
-  }
-  return [...byId.values()];
-}
-
-function sortFixtures(fixtures: FixtureSummary[]): FixtureSummary[] {
-  return fixtures.sort((a, b) => {
-    const aLive = LIVE_STATUSES.has(a.status) ? 0 : 1;
-    const bLive = LIVE_STATUSES.has(b.status) ? 0 : 1;
-    if (aLive !== bLive) return aLive - bLive;
-    return new Date(a.date).getTime() - new Date(b.date).getTime();
-  });
 }
 
 function filterFixtures(
@@ -155,11 +93,50 @@ function filterFixtures(
   return sortFixtures(filtered).slice(0, 40);
 }
 
+export interface FixtureSearchResult {
+  fixtures: FixtureSummary[];
+  spotlight?: TeamSpotlight;
+}
+
 export async function searchFixtures(options: {
   query?: string;
   leagueId?: number;
   days?: number;
-}): Promise<FixtureSummary[]> {
+}): Promise<FixtureSearchResult> {
+  const query = options.query?.trim();
+
+  if (query && query.length >= 2) {
+    const spotlight = await findTeamNextFixture(query);
+
+    if (spotlight) {
+      const teamFixtures = filterTeamFixtures(
+        [spotlight.nextFixture],
+        spotlight.team.id,
+      );
+
+      return {
+        fixtures: teamFixtures,
+        spotlight,
+      };
+    }
+
+    const days = options.days ?? 14;
+    const from = new Date().toISOString().slice(0, 10);
+    const to = new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+
+    const [liveFixtures, rangedFixtures] = await Promise.all([
+      fetchLiveFixtures().catch(() => []),
+      fetchFixturesInRange(from, to).catch(() => []),
+    ]);
+
+    const merged = dedupeFixtures([...liveFixtures, ...rangedFixtures]);
+    const fixtures = filterFixtures(merged, query);
+
+    return { fixtures };
+  }
+
   const days = options.days ?? 14;
   const from = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
     .toISOString()
@@ -168,7 +145,7 @@ export async function searchFixtures(options: {
     .toISOString()
     .slice(0, 10);
 
-  const defaultToWorldCup = !options.query && !options.leagueId;
+  const defaultToWorldCup = !options.leagueId;
   const leagueFilter = options.leagueId
     ?? (defaultToWorldCup ? WORLD_CUP_LEAGUE_ID : undefined);
 
@@ -178,7 +155,9 @@ export async function searchFixtures(options: {
   ]);
 
   const merged = dedupeFixtures([...liveFixtures, ...rangedFixtures]);
-  return filterFixtures(merged, options.query, leagueFilter);
+  const fixtures = filterFixtures(merged, undefined, leagueFilter);
+
+  return { fixtures };
 }
 
 export async function getFixtureById(
@@ -191,3 +170,5 @@ export async function getFixtureById(
   const item = data.response[0];
   return item ? mapFixture(item) : null;
 }
+
+export type { TeamSpotlight } from "./teams";

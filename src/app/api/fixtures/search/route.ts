@@ -20,8 +20,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    const fixtures = await searchFixtures(parsed.data);
-    return NextResponse.json({ fixtures });
+    const result = await searchFixtures(parsed.data);
+    return NextResponse.json(result);
   } catch (error) {
     if (error instanceof FootballApiError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
