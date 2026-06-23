@@ -35,7 +35,7 @@ export function FactorChart({ factors }: FactorChartProps) {
             <YAxis
               type="category"
               dataKey="name"
-              width={100}
+              width={130}
               tick={{ fontSize: 11, fill: chartTheme.tick }}
             />
             <Tooltip contentStyle={chartTheme.tooltip} />

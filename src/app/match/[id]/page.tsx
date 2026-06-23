@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AnalysisProgress } from "@/components/analysis-progress";
 import { AnalysisResultsPanel } from "@/components/analysis-results-panel";
 import { AskAnalyst } from "@/components/ask-analyst";
+import { BetMarketRail } from "@/components/bet-market-rail";
 
 import { runAnalysisStream } from "@/lib/client/analyze-stream";
 import { readStashedFixture } from "@/lib/client/fixture-session";
@@ -133,9 +134,14 @@ export default function MatchDetailPage() {
   const preview = fixture ? buildMatchPreview(fixture) : null;
   const live = fixture ? isFixtureLive(fixture) : false;
   const upcoming = fixture ? isFixtureUpcoming(fixture) : false;
+  const showBetRail =
+    !!fixture &&
+    !error &&
+    (isBootstrapping || isAnalyzing || !!progressStep || !!result);
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 py-8 sm:px-8">
+    <>
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 py-8 pb-24 sm:px-8 lg:pb-8">
       <Link
         href="/"
         className="text-muted hover:text-accent mb-8 inline-flex items-center gap-1.5 text-sm font-medium"
@@ -162,18 +168,27 @@ export default function MatchDetailPage() {
                 {fixture.awayTeam.name}
               </h1>
             </div>
-            <div className="flex gap-2">
-              {live && (
-                <span className="bg-negative/15 text-negative live-pulse flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold">
-                  <span className="bg-negative h-1.5 w-1.5 rounded-full" />
-                  LIVE
-                </span>
-              )}
-              {upcoming && !live && (
-                <span className="bg-accent-soft text-accent rounded-full px-3 py-1 text-xs font-medium">
-                  Upcoming
-                </span>
-              )}
+            <div className="flex flex-col items-end gap-2.5">
+              <div className="flex gap-2">
+                {live && (
+                  <span className="bg-negative/15 text-negative live-pulse flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold">
+                    <span className="bg-negative h-1.5 w-1.5 rounded-full" />
+                    LIVE
+                  </span>
+                )}
+                {upcoming && !live && (
+                  <span className="bg-accent-soft text-accent rounded-full px-3 py-1 text-xs font-medium">
+                    Upcoming
+                  </span>
+                )}
+              </div>
+              <BetMarketRail
+                fixture={fixture}
+                market={market}
+                resultMarket={result?.polymarket}
+                visible={showBetRail}
+                variant="inline"
+              />
             </div>
           </div>
 
@@ -219,8 +234,18 @@ export default function MatchDetailPage() {
         </div>
       )}
 
-
     </main>
+
+    {fixture && (
+      <BetMarketRail
+        fixture={fixture}
+        market={market}
+        resultMarket={result?.polymarket}
+        visible={showBetRail}
+        variant="mobile"
+      />
+    )}
+    </>
   );
 }
 

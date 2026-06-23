@@ -57,6 +57,10 @@ export function AnalysisResultsPanel({
 
         {teeVerified && <TeeVerifiedCallout className="mt-5" />}
 
+        <div className="mt-5">
+          <ProbabilityChart comparisons={result.comparisons} embedded />
+        </div>
+
         <div className="mt-6 grid grid-cols-3 gap-3 sm:max-w-lg">
           <MetricTile label="Win prob" value={`${winProb}%`} />
           <MetricTile label="Volatility" value={volatility} />
@@ -159,8 +163,7 @@ export function AnalysisResultsPanel({
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ProbabilityChart comparisons={result.comparisons} />
+      <div className="grid gap-4 lg:grid-cols-3">
         <FormTrendChart
           homeTeam={result.matchData.fixture.homeTeam.name}
           awayTeam={result.matchData.fixture.awayTeam.name}

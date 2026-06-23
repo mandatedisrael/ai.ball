@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { AnalysisSourcePills } from "@/components/analysis-source-pills";
-import { TeeVerifiedBadge } from "@/components/tee-verified-badge";
+import { TeeVerifiedBadge, TeeVerifiedCallout } from "@/components/tee-verified-badge";
 import type { AnalysisProgressStep } from "@/types/stream";
 
 const STEP_HINTS: Record<AnalysisProgressStep, string[]> = {
@@ -67,15 +67,56 @@ export function AnalysisResearchStage({
 
         <AnalysisSourcePills activeStep={step} />
 
+        {isInference && <TeeVerifiedCallout className="mt-5" />}
+
+        {isInference && (
+          <div className="mt-5 rounded-2xl border border-border bg-surface-elevated/35 p-4 sm:p-5">
+            <p className="label mb-1">Probability comparison</p>
+            <p className="text-muted mb-4 text-xs">AI model vs prediction market</p>
+            <ProbabilityChartSkeleton />
+          </div>
+        )}
+
         <p className="text-muted mt-4 text-sm">{hint}</p>
       </div>
 
-      <ChartSkeletonGrid homeTeam={homeTeam} awayTeam={awayTeam} />
+      <SecondaryChartSkeletonGrid homeTeam={homeTeam} awayTeam={awayTeam} />
     </section>
   );
 }
 
-function ChartSkeletonGrid({
+const PROB_SKELETON_BARS: Array<[number, number]> = [
+  [72, 48],
+  [28, 18],
+  [20, 12],
+];
+
+function ProbabilityChartSkeleton() {
+  return (
+    <div className="flex h-48 items-end justify-center gap-6 px-4 sm:h-56 sm:gap-10">
+      {["Home", "Draw", "Away"].map((label, index) => {
+        const [modelHeight, marketHeight] = PROB_SKELETON_BARS[index];
+        return (
+          <div key={label} className="flex flex-col items-center gap-2">
+            <div className="flex items-end gap-2">
+              <div
+                className="analysis-shimmer w-7 rounded-t-md sm:w-9"
+                style={{ height: `${modelHeight}px` }}
+              />
+              <div
+                className="analysis-shimmer w-7 rounded-t-md opacity-70 sm:w-9"
+                style={{ height: `${marketHeight}px` }}
+              />
+            </div>
+            <span className="text-muted text-xs">{label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function SecondaryChartSkeletonGrid({
   homeTeam,
   awayTeam,
 }: {
@@ -83,14 +124,13 @@ function ChartSkeletonGrid({
   awayTeam: string;
 }) {
   const cards = [
-    { title: "Win probabilities", subtitle: "Model vs market" },
     { title: "Form trend", subtitle: `${homeTeam} / ${awayTeam}` },
-    { title: "Key factors", subtitle: "Weighted drivers" },
+    { title: "Factor weights", subtitle: "Weighted drivers" },
     { title: "Head-to-head", subtitle: "Recent meetings" },
   ];
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid gap-4 lg:grid-cols-3">
       {cards.map((card, index) => (
         <div
           key={card.title}
