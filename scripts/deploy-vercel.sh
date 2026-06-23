@@ -3,7 +3,8 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
-PROJECT_NAME="matchanalyst"
+PROJECT_NAME="${VERCEL_PROJECT:-match-analyst-black}"
+PRODUCTION_URL="${PRODUCTION_URL:-https://match-analyst-black.vercel.app}"
 ENV_FILE="${ENV_FILE:-.env.local}"
 
 if ! vercel whoami >/dev/null 2>&1; then
@@ -37,11 +38,11 @@ while IFS= read -r key; do
   sync_env "$key"
 done < <(grep -E '^[A-Z_]+=' "$ENV_FILE" | cut -d= -f1)
 
-printf '%s' "https://${PROJECT_NAME}.vercel.app" | vercel env add NEXT_PUBLIC_APP_URL production --force >/dev/null
-printf '%s' "https://${PROJECT_NAME}.vercel.app" | vercel env add NEXT_PUBLIC_APP_URL preview --force >/dev/null
+printf '%s' "$PRODUCTION_URL" | vercel env add NEXT_PUBLIC_APP_URL production --force >/dev/null
+printf '%s' "$PRODUCTION_URL" | vercel env add NEXT_PUBLIC_APP_URL preview --force >/dev/null
 echo "Synced NEXT_PUBLIC_APP_URL"
 
 echo "Deploying to production…"
 vercel deploy --prod --yes
 
-echo "Live at: https://${PROJECT_NAME}.vercel.app"
+echo "Live at: $PRODUCTION_URL"

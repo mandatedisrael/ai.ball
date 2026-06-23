@@ -45,6 +45,8 @@ Open [http://localhost:3000](http://localhost:3000). Without API keys the app ru
 
 ## Production deploy (Vercel)
 
+Live app: [https://match-analyst-black.vercel.app](https://match-analyst-black.vercel.app)
+
 1. Import the GitHub repo in [Vercel](https://vercel.com)
 2. Set environment variables from `.env.example`
 3. Deploy — no database or Redis required
