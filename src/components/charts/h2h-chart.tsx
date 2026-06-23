@@ -11,10 +11,12 @@ import {
   YAxis,
 } from "recharts";
 
+import {
+  CHART_GRID_COLOR,
+  CHART_TICK_COLOR,
+  CHART_TOOLTIP_STYLE,
+} from "@/components/charts/chart-theme";
 import type { HeadToHeadMatch } from "@/types/fixture";
-
-const GRID_COLOR = "rgba(255,255,255,0.06)";
-const TICK_COLOR = "#9ca3af";
 
 interface H2HChartProps {
   matches: HeadToHeadMatch[];
@@ -44,27 +46,21 @@ export function H2HChart({ matches, homeTeam, awayTeam }: H2HChartProps) {
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} />
-            <XAxis dataKey="date" tick={{ fontSize: 12, fill: TICK_COLOR }} />
-            <YAxis tick={{ fontSize: 12, fill: TICK_COLOR }} />
-            <Tooltip
-              contentStyle={{
-                background: "#1a1d26",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: "0.75rem",
-              }}
-            />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
+            <XAxis dataKey="date" tick={{ fontSize: 12, fill: CHART_TICK_COLOR }} />
+            <YAxis tick={{ fontSize: 12, fill: CHART_TICK_COLOR }} />
+            <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
             <Legend />
             <Bar
               dataKey="homeGoals"
               name={homeTeam}
-              fill="#34d399"
+              fill="#16a34a"
               radius={[4, 4, 0, 0]}
             />
             <Bar
               dataKey="awayGoals"
               name={awayTeam}
-              fill="#38bdf8"
+              fill="#0369a1"
               radius={[4, 4, 0, 0]}
             />
           </BarChart>

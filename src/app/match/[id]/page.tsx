@@ -5,13 +5,9 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { AnalysisProgress } from "@/components/analysis-progress";
-import { AnalysisStream } from "@/components/analysis-stream";
+import { AnalysisResultsPanel } from "@/components/analysis-results-panel";
 import { AskAnalyst } from "@/components/ask-analyst";
-import { FactorChart } from "@/components/charts/factor-chart";
-import { FormTrendChart } from "@/components/charts/form-trend-chart";
-import { H2HChart } from "@/components/charts/h2h-chart";
-import { ProbabilityChart } from "@/components/charts/probability-chart";
-import { TradingInsight } from "@/components/trading-insight";
+
 import { runAnalysisStream } from "@/lib/client/analyze-stream";
 import { readStashedFixture } from "@/lib/client/fixture-session";
 import { saveAnalysisResult } from "@/lib/client/local-store";
@@ -177,7 +173,7 @@ export default function MatchDetailPage() {
             {fixture.venue ?? "Venue TBD"}
           </p>
 
-          {preview && !result && (
+          {preview && !result && !isAnalyzing && !progressStep && (
             <div className="mt-6 grid grid-cols-3 gap-3 sm:max-w-md">
               <MetricCard label="Win prob" value={`${preview.winProbability}%`} />
               <MetricCard label="Volatility" value={preview.volatility} />
@@ -202,56 +198,14 @@ export default function MatchDetailPage() {
 
       {result && (
         <div className="space-y-6">
-          <div className="grid grid-cols-3 gap-3 sm:max-w-lg">
-            <MetricCard
-              label="Win prob"
-              value={`${(Math.max(result.probabilities.home, result.probabilities.away) * 100).toFixed(1)}%`}
-            />
-            <MetricCard label="Volatility" value={preview?.volatility ?? "MED"} />
-            <MetricCard label="Confidence" value={result.confidence} />
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <ProbabilityChart comparisons={result.comparisons} />
-            <FormTrendChart
-              homeTeam={result.matchData.fixture.homeTeam.name}
-              awayTeam={result.matchData.fixture.awayTeam.name}
-              homeForm={result.matchData.homeForm}
-              awayForm={result.matchData.awayForm}
-            />
-            <FactorChart factors={result.keyFactors} />
-            <H2HChart
-              matches={result.matchData.headToHead}
-              homeTeam={result.matchData.fixture.homeTeam.name}
-              awayTeam={result.matchData.fixture.awayTeam.name}
-            />
-          </div>
-
-          {market?.found && market.outcomes[0] && (
-            <div className="card flex items-center justify-between p-4">
-              <div>
-                <p className="label mb-1">Polymarket odds</p>
-                <p className="font-medium">{market.outcomes[0].label}</p>
-              </div>
-              <p className="text-accent font-mono text-2xl font-bold">
-                ${market.outcomes[0].price.toFixed(2)}
-              </p>
-            </div>
-          )}
-
-          <AnalysisStream
+          <AnalysisResultsPanel
             result={result}
-            isLoading={false}
-            progressMessage={null}
-          />
-
-          <TradingInsight
-            result={result}
+            market={market}
+            volatility={preview?.volatility ?? "MED"}
             onSave={saveAnalysis}
             isSaving={isSaving}
             saveMessage={saveMessage}
           />
-
           <AskAnalyst result={result} />
         </div>
       )}
@@ -263,9 +217,9 @@ export default function MatchDetailPage() {
 
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-surface-elevated/60 rounded-xl px-4 py-3 text-center">
+    <div className="rounded-xl border border-border bg-surface px-4 py-3 text-center">
       <p className="label mb-1">{label}</p>
-      <p className="text-xl font-bold">{value}</p>
+      <p className="text-xl font-bold capitalize">{value}</p>
     </div>
   );
 }

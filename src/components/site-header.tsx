@@ -4,7 +4,7 @@ import { BrandName } from "@/components/brand-name";
 
 export function SiteHeader() {
   return (
-    <header className="border-border sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl">
+    <header className="border-border sticky top-0 z-50 border-b bg-surface/90 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
         <Link href="/" className="group flex items-center gap-2">
           <span className="bg-accent/15 text-accent flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold">
