@@ -1,42 +1,25 @@
 "use client";
 
 import { formatPercent } from "@/lib/probability";
-import type { SavedAnalysis } from "@/types/analysis";
+import type { AnalysisResult, SavedAnalysis } from "@/types/analysis";
 
 interface SavedAnalysesProps {
   items: SavedAnalysis[];
-  isLoading: boolean;
-  onRefresh: () => void;
+  onLoad: (result: AnalysisResult) => void;
+  onDelete: (id: string) => void;
 }
 
-export function SavedAnalyses({
-  items,
-  isLoading,
-  onRefresh,
-}: SavedAnalysesProps) {
+export function SavedAnalyses({ items, onLoad, onDelete }: SavedAnalysesProps) {
   return (
     <section className="bg-surface border-border rounded-2xl border p-6">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">Saved Research</h2>
-          <p className="text-muted text-sm">
-            Analyses stored with Polymarket snapshots
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onRefresh}
-          className="text-accent text-sm font-medium hover:underline"
-        >
-          Refresh
-        </button>
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold">Saved Research</h2>
+        <p className="text-muted text-sm">
+          Stored in your browser — click to reload an analysis
+        </p>
       </div>
 
-      {isLoading && (
-        <p className="text-muted text-sm">Loading saved analyses…</p>
-      )}
-
-      {!isLoading && items.length === 0 && (
+      {items.length === 0 && (
         <p className="text-muted text-sm">
           No saved analyses yet. Run an analysis and click Save.
         </p>
@@ -51,26 +34,35 @@ export function SavedAnalyses({
               className="bg-surface-elevated border-border rounded-xl border px-4 py-3"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="font-medium">
+                <button
+                  type="button"
+                  onClick={() => onLoad(item.result)}
+                  className="text-left font-medium hover:text-accent transition"
+                >
                   {fixture.homeTeam.name} vs {fixture.awayTeam.name}
-                </p>
-                <span className="text-muted text-xs">
-                  {new Date(item.savedAt).toLocaleString()}
-                </span>
+                </button>
+                <div className="flex items-center gap-3">
+                  <span className="text-muted text-xs">
+                    {new Date(item.savedAt).toLocaleString()}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(item.id)}
+                    className="text-muted hover:text-negative text-xs"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-              <p className="text-muted mt-1 font-mono text-xs">
+              <button
+                type="button"
+                onClick={() => onLoad(item.result)}
+                className="text-muted mt-1 block text-left font-mono text-xs hover:text-foreground"
+              >
                 Home {formatPercent(item.result.probabilities.home)} | Draw{" "}
                 {formatPercent(item.result.probabilities.draw)} | Away{" "}
                 {formatPercent(item.result.probabilities.away)}
-              </p>
-              {item.polymarketSnapshot?.found && (
-                <p className="text-muted mt-1 text-xs">
-                  Polymarket snapshot captured
-                  {item.polymarketSnapshot.volumeUsd
-                    ? ` · $${item.polymarketSnapshot.volumeUsd.toLocaleString()} vol`
-                    : ""}
-                </p>
-              )}
+              </button>
             </li>
           );
         })}
