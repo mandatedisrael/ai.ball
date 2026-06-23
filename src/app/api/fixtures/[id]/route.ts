@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
+import { FootballDataError } from "@/services/football-data/client";
 import { FootballApiError } from "@/services/football/client";
-import { getFixtureById } from "@/services/football/fixtures";
+import { getFixtureById } from "@/services/football/provider";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -23,7 +24,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
     return NextResponse.json({ fixture });
   } catch (error) {
-    if (error instanceof FootballApiError) {
+    if (error instanceof FootballDataError || error instanceof FootballApiError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
 

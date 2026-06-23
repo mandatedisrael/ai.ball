@@ -5,7 +5,10 @@ import { useEffect, useState } from "react";
 interface HealthResponse {
   mode: "live" | "football-only" | "compute-only" | "unconfigured";
   services: {
-    apiFootball: boolean;
+    football?: boolean;
+    footballProvider?: "football-data" | "api-football" | "none";
+    apiFootball?: boolean;
+    footballData?: boolean;
     zerogCompute: boolean;
     openWeather: boolean;
     polymarket: boolean;
@@ -42,7 +45,14 @@ export function ServiceStatus() {
       >
         {MODE_LABELS[health.mode]}
       </span>
-      <StatusPill label="API-Football" active={health.services.apiFootball} />
+      <StatusPill
+        label={
+          health.services.footballProvider === "football-data"
+            ? "football-data.org"
+            : "API-Football"
+        }
+        active={Boolean(health.services.football)}
+      />
       <StatusPill label="0G Compute" active={health.services.zerogCompute} />
       <StatusPill label="Weather" active={health.services.openWeather} />
       <StatusPill label="Polymarket" active={health.services.polymarket} />

@@ -8,7 +8,7 @@ import {
   isFixtureLive,
   isFixtureUpcoming,
 } from "@/lib/match-preview";
-import type { TeamSpotlight } from "@/services/football/teams";
+import type { TeamSpotlight } from "@/services/football/provider";
 import type { PolymarketMarketContext } from "@/types/polymarket";
 
 interface TeamSpotlightCardProps {

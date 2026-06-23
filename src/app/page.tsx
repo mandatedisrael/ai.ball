@@ -11,7 +11,7 @@ import { useSavedAnalyses } from "@/hooks/use-local-store";
 import { deleteSavedAnalysis } from "@/lib/client/local-store";
 import { WORLD_CUP_LEAGUE_ID } from "@/lib/leagues";
 import type { SupportedLeague } from "@/lib/leagues";
-import type { TeamSpotlight } from "@/services/football/teams";
+import type { TeamSpotlight } from "@/services/football/provider";
 import type { AnalysisResult } from "@/types/analysis";
 import type { FixtureSummary } from "@/types/fixture";
 import type { PolymarketMarketContext } from "@/types/polymarket";

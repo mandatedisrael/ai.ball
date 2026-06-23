@@ -6,6 +6,7 @@ function optional(name: string, fallback = ""): string {
 
 export const env = {
   apiFootballKey: optional("API_FOOTBALL_KEY"),
+  footballDataApiKey: optional("FOOTBALL_DATA_API_KEY"),
   polymarketGammaBaseUrl: optional(
     "POLYMARKET_GAMMA_BASE_URL",
     "https://gamma-api.polymarket.com",
@@ -24,6 +25,20 @@ export const env = {
 
 export function hasApiFootball(): boolean {
   return env.apiFootballKey.length > 0;
+}
+
+export function hasFootballData(): boolean {
+  return env.footballDataApiKey.length > 0;
+}
+
+export function hasFootballProvider(): boolean {
+  return hasFootballData() || hasApiFootball();
+}
+
+export function getFootballProvider(): "football-data" | "api-football" | "none" {
+  if (hasFootballData()) return "football-data";
+  if (hasApiFootball()) return "api-football";
+  return "none";
 }
 
 export function hasZerogRouter(): boolean {

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 
 import { fixtureSearchSchema } from "@/lib/schemas/analysis";
+import { FootballDataError } from "@/services/football-data/client";
 import { FootballApiError } from "@/services/football/client";
-import { searchFixtures } from "@/services/football/fixtures";
+import { searchFixtures } from "@/services/football/provider";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
     const result = await searchFixtures(parsed.data);
     return NextResponse.json(result);
   } catch (error) {
-    if (error instanceof FootballApiError) {
+    if (error instanceof FootballDataError || error instanceof FootballApiError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
 

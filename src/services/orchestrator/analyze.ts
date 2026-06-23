@@ -1,10 +1,12 @@
-import { hasZerogCompute } from "@/lib/env";
+import { hasFootballProvider, hasZerogCompute } from "@/lib/env";
 import {
   buildComparisons,
   normalizeProbabilities,
 } from "@/lib/probability";
-import { getFixtureById } from "@/services/football/fixtures";
-import { buildMatchDataBundle } from "@/services/football/match-data";
+import {
+  buildMatchDataBundle,
+  getFixtureById,
+} from "@/services/football/provider";
 import { resolvePolymarketMarket } from "@/services/polymarket/markets";
 import { fetchWeatherForVenue } from "@/services/weather/openweather";
 import { runZerogAnalysis } from "@/services/zerog/compute";

@@ -1,4 +1,4 @@
-import { getSeasonForLeague } from "@/lib/leagues";
+import { getSeasonForLeague, toApiFootballLeagueId } from "@/lib/leagues";
 import type {
   FixtureSummary,
   HeadToHeadMatch,
@@ -101,6 +101,7 @@ async function fetchRecentForm(
 export async function buildMatchDataBundle(
   fixture: FixtureSummary,
 ): Promise<MatchDataBundle> {
+  const apiLeagueId = toApiFootballLeagueId(fixture.league.id);
   const season = getSeasonForLeague(fixture.league.id);
 
   const [h2hData, injuriesData, standingsData, homeForm, awayForm] =
@@ -113,11 +114,11 @@ export async function buildMatchDataBundle(
         fixture: fixture.id,
       }),
       footballFetch<StandingsResponse>("/standings", {
-        league: fixture.league.id,
+        league: apiLeagueId,
         season,
       }),
-      fetchRecentForm(fixture.homeTeam.id, fixture.league.id, season),
-      fetchRecentForm(fixture.awayTeam.id, fixture.league.id, season),
+      fetchRecentForm(fixture.homeTeam.id, apiLeagueId, season),
+      fetchRecentForm(fixture.awayTeam.id, apiLeagueId, season),
     ]);
 
   const headToHead: HeadToHeadMatch[] = h2hData.response.map((m) => ({
