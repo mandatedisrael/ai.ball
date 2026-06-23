@@ -43,7 +43,7 @@ export function savePreferences(
 
 export function loadSavedAnalyses(): SavedAnalysis[] {
   const items = readStorage<SavedAnalysis[]>(SAVED_KEY, []);
-  return items.sort((a, b) => b.savedAt.localeCompare(a.savedAt));
+  return [...items].sort((a, b) => b.savedAt.localeCompare(a.savedAt));
 }
 
 export function saveAnalysisResult(result: AnalysisResult): SavedAnalysis {
