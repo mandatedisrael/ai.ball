@@ -43,3 +43,6 @@ coverage/
 # 0G / wallet secrets
 *.pem
 wallet.json
+
+# Local persistence
+.data/
