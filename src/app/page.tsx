@@ -29,6 +29,7 @@ export default function HomePage() {
     Record<number, PolymarketMarketContext>
   >({});
   const [isSearching, setIsSearching] = useState(false);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const savedItems = useSavedAnalyses();
 
@@ -132,7 +133,10 @@ export default function HomePage() {
           );
         }
       } finally {
-        if (!cancelled) setIsSearching(false);
+        if (!cancelled) {
+          setIsSearching(false);
+          setHasInitiallyLoaded(true);
+        }
       }
     }
 
@@ -149,6 +153,13 @@ export default function HomePage() {
       : leagues.find((l) => l.id === selectedLeagueId)?.name ?? "Matches";
 
   const showFeedGrid = !spotlight && fixtures.length > 0;
+  const showInitialLoading = !hasInitiallyLoaded && isSearching;
+  const showBrowseEmpty =
+    hasInitiallyLoaded &&
+    fixtures.length === 0 &&
+    !isSearching &&
+    !error &&
+    !activeQuery;
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 py-10 sm:px-8">
@@ -172,14 +183,21 @@ export default function HomePage() {
       <ServiceStatus />
 
       {error && (
-        <div className="card text-negative mt-4 p-4 text-sm">{error}</div>
+        <div className="card mt-4 border-negative/25 bg-negative/5 p-4 text-sm leading-6">
+          <p className="text-negative font-medium">Could not load fixtures</p>
+          <p className="text-muted mt-1">
+            {error.includes("request limit")
+              ? "API-Football daily quota is exhausted. Fixtures will refresh when the limit resets, or upgrade your plan at api-football.com."
+              : error}
+          </p>
+        </div>
       )}
 
-      {!spotlight && (
+      {!spotlight && (hasInitiallyLoaded || isSearching || error) && (
         <section className="mt-8">
           <div className="mb-5 flex items-center justify-between">
-            <h2 className="font-display text-xl font-bold">
-              {isSearching ? "Looking up next match…" : sectionTitle}
+            <h2 className="font-display text-xl font-semibold">
+              {showInitialLoading ? "Loading fixtures…" : sectionTitle}
             </h2>
             {!isSearching && fixtures.length > 0 && (
               <span className="text-muted text-sm">
@@ -197,16 +215,29 @@ export default function HomePage() {
             </div>
           )}
 
-          {fixtures.length === 0 && !isSearching && !error && !activeQuery && (
+          {showBrowseEmpty && (
             <div className="card py-16 text-center">
               <p className="text-muted text-sm">
-                No fixtures found for this league. Try another search.
+                No upcoming fixtures in this league right now. Try another league
+                or search a team by name.
               </p>
             </div>
           )}
 
-          {isSearching && fixtures.length === 0 && !spotlight && (
-            <div className="card mx-auto max-w-3xl animate-pulse py-24" />
+          {(showInitialLoading || (isSearching && fixtures.length === 0)) && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[0, 1, 2, 3].map((slot) => (
+                <div
+                  key={slot}
+                  className="card analysis-skeleton-card p-5"
+                  style={{ animationDelay: `${slot * 100}ms` }}
+                >
+                  <div className="analysis-shimmer mb-3 h-3 w-1/3 rounded-full" />
+                  <div className="analysis-shimmer mb-6 h-6 w-2/3 rounded-lg" />
+                  <div className="analysis-shimmer h-16 w-full rounded-xl" />
+                </div>
+              ))}
+            </div>
           )}
 
           {showFeedGrid && (

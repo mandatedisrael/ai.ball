@@ -1,10 +1,11 @@
-import { WORLD_CUP_LEAGUE_ID } from "@/lib/leagues";
+import { getSeasonForLeague, WORLD_CUP_LEAGUE_ID } from "@/lib/leagues";
 import type { FixtureSummary } from "@/types/fixture";
 import { footballFetch } from "@/services/football/client";
 
 import {
   dedupeFixtures,
   fetchFixturesByDate,
+  fetchFixturesByLeague,
   fetchLiveFixtures,
   mapFixture,
   sortFixtures,
@@ -127,8 +128,8 @@ export async function searchFixtures(options: {
       .slice(0, 10);
 
     const [liveFixtures, rangedFixtures] = await Promise.all([
-      fetchLiveFixtures().catch(() => []),
-      fetchFixturesInRange(from, to).catch(() => []),
+      fetchLiveFixtures(),
+      fetchFixturesInRange(from, to),
     ]);
 
     const merged = dedupeFixtures([...liveFixtures, ...rangedFixtures]);
@@ -149,12 +150,21 @@ export async function searchFixtures(options: {
   const leagueFilter = options.leagueId
     ?? (defaultToWorldCup ? WORLD_CUP_LEAGUE_ID : undefined);
 
-  const [liveFixtures, rangedFixtures] = await Promise.all([
-    fetchLiveFixtures(leagueFilter).catch(() => []),
-    fetchFixturesInRange(from, to, leagueFilter).catch(() => []),
+  const season = leagueFilter ? getSeasonForLeague(leagueFilter) : undefined;
+
+  const [liveFixtures, leagueFixtures, rangedFixtures] = await Promise.all([
+    fetchLiveFixtures(leagueFilter),
+    leagueFilter && season
+      ? fetchFixturesByLeague(leagueFilter, season, from, to)
+      : Promise.resolve([]),
+    fetchFixturesInRange(from, to, leagueFilter),
   ]);
 
-  const merged = dedupeFixtures([...liveFixtures, ...rangedFixtures]);
+  const merged = dedupeFixtures([
+    ...liveFixtures,
+    ...leagueFixtures,
+    ...rangedFixtures,
+  ]);
   const fixtures = filterFixtures(merged, undefined, leagueFilter);
 
   return { fixtures };

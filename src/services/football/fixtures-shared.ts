@@ -62,6 +62,24 @@ export function mapFixture(item: ApiFootballFixture): FixtureSummary {
   };
 }
 
+export async function fetchFixturesByLeague(
+  leagueId: number,
+  season: number,
+  from?: string,
+  to?: string,
+): Promise<FixtureSummary[]> {
+  const params: Record<string, string | number> = {
+    league: leagueId,
+    season,
+  };
+
+  if (from) params.from = from;
+  if (to) params.to = to;
+
+  const data = await footballFetch<FixturesResponse>("/fixtures", params);
+  return data.response.map(mapFixture);
+}
+
 export async function fetchFixturesByDate(
   date: string,
 ): Promise<FixtureSummary[]> {

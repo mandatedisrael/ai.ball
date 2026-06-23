@@ -52,5 +52,20 @@ export async function footballFetch<T>(
     );
   }
 
-  return response.json() as Promise<T>;
+  const data = (await response.json()) as T & {
+    errors?: Record<string, string> | string[];
+  };
+
+  if (data.errors) {
+    const message = Array.isArray(data.errors)
+      ? data.errors.join(" ")
+      : Object.values(data.errors).join(" ");
+
+    if (message) {
+      const status = message.toLowerCase().includes("request limit") ? 429 : 502;
+      throw new FootballApiError(message, status);
+    }
+  }
+
+  return data;
 }

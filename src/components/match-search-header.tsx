@@ -29,15 +29,15 @@ export function MatchSearchHeader({
       <div className="animate-fade-up mb-12 text-center">
         <p className="label mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-1.5">
           <span className="analysis-live-dot" />
-          World Cup 2026 · Live data
+          0G TEE-verified inference
         </p>
-        <h1 className="font-display mb-4 text-[2.6rem] leading-[1.05] font-extrabold tracking-tight sm:text-6xl">
-          Every match,
-          <span className="text-accent"> decoded.</span>
+        <h1 className="font-display mb-4 text-4xl font-bold leading-[1.1] sm:text-[2.75rem]">
+          Verified AI analysis
+          <span className="text-accent"> for football.</span>
         </h1>
-        <p className="text-muted mx-auto max-w-xl text-base leading-relaxed sm:text-lg">
-          Probabilities, form, injuries, and Polymarket context — analyzed inside
-          0G&apos;s TEE-verified compute.
+        <p className="text-muted mx-auto max-w-xl text-base leading-relaxed">
+          Match probabilities grounded in live stats — form, injuries, weather,
+          and Polymarket context — with cryptographically verifiable 0G compute.
         </p>
       </div>
 
