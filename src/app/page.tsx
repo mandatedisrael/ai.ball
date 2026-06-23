@@ -2,55 +2,44 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { AnalysisProgress } from "@/components/analysis-progress";
-import { AnalysisStream } from "@/components/analysis-stream";
-import { AskAnalyst } from "@/components/ask-analyst";
-import { Disclaimer } from "@/components/disclaimer";
-import { MatchInput } from "@/components/match-input";
-import { ProbabilityBreakdown } from "@/components/probability-breakdown";
+import { MatchFeedCard } from "@/components/match-feed-card";
+import { MatchSearchHeader } from "@/components/match-search-header";
 import { SavedAnalyses } from "@/components/saved-analyses";
 import { ServiceStatus } from "@/components/service-status";
-import { TradingInsight } from "@/components/trading-insight";
-import {
-  WorkspaceTabs,
-  type WorkspaceTab,
-} from "@/components/workspace-tabs";
-import { runAnalysisStream } from "@/lib/client/analyze-stream";
-import {
-  deleteSavedAnalysis,
-  loadPreferences,
-  saveAnalysisResult,
-  savePreferences,
-} from "@/lib/client/local-store";
-import { useFavoriteTeams, useSavedAnalyses } from "@/hooks/use-local-store";
+import { useSavedAnalyses } from "@/hooks/use-local-store";
+import { deleteSavedAnalysis } from "@/lib/client/local-store";
 import type { SupportedLeague } from "@/lib/leagues";
 import type { AnalysisResult } from "@/types/analysis";
 import type { FixtureSummary } from "@/types/fixture";
 import type { PolymarketMarketContext } from "@/types/polymarket";
-import type { AnalysisProgressStep } from "@/types/stream";
 
 export default function HomePage() {
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>("match");
   const [query, setQuery] = useState("");
   const [leagues, setLeagues] = useState<SupportedLeague[]>([]);
   const [selectedLeagueId, setSelectedLeagueId] = useState<number | null>(null);
   const [fixtures, setFixtures] = useState<FixtureSummary[]>([]);
-  const [selectedFixture, setSelectedFixture] = useState<FixtureSummary | null>(
-    null,
-  );
-  const [market, setMarket] = useState<PolymarketMarketContext | null>(null);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const savedItems = useSavedAnalyses();
-  const favoriteTeams = useFavoriteTeams();
+  const [markets, setMarkets] = useState<
+    Record<number, PolymarketMarketContext>
+  >({});
   const [isSearching, setIsSearching] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [progressStep, setProgressStep] = useState<AnalysisProgressStep | null>(
-    null,
-  );
-  const [progressMessage, setProgressMessage] = useState<string | null>(null);
-  const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const savedItems = useSavedAnalyses();
+
+  const loadMarkets = useCallback(async (items: FixtureSummary[]) => {
+    const entries = await Promise.all(
+      items.slice(0, 12).map(async (fixture) => {
+        try {
+          const response = await fetch(`/api/fixtures/${fixture.id}/market`);
+          const data = await response.json();
+          return [fixture.id, data.market] as const;
+        } catch {
+          return [fixture.id, null] as const;
+        }
+      }),
+    );
+
+    setMarkets(Object.fromEntries(entries));
+  }, []);
 
   const searchFixtures = useCallback(async () => {
     setIsSearching(true);
@@ -68,115 +57,22 @@ export default function HomePage() {
         throw new Error(data.error ?? "Fixture search failed");
       }
 
-      setFixtures(data.fixtures ?? []);
+      const nextFixtures: FixtureSummary[] = data.fixtures ?? [];
+      setFixtures(nextFixtures);
+      void loadMarkets(nextFixtures);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Fixture search failed");
     } finally {
       setIsSearching(false);
     }
-  }, [query, selectedLeagueId]);
-
-  const loadMarket = useCallback(async (fixtureId: number) => {
-    try {
-      const response = await fetch(`/api/fixtures/${fixtureId}/market`);
-      const data = await response.json();
-      if (response.ok) {
-        setMarket(data.market ?? null);
-      }
-    } catch {
-      setMarket(null);
-    }
-  }, []);
-
-  const handleSelectFixture = useCallback(
-    (fixture: FixtureSummary) => {
-      setSelectedFixture(fixture);
-      setResult(null);
-      setSaveMessage(null);
-      setProgressMessage(null);
-      setProgressStep(null);
-      setActiveTab("match");
-      void loadMarket(fixture.id);
-    },
-    [loadMarket],
-  );
-
-  const toggleFavorite = useCallback((teamName: string) => {
-    const prefs = loadPreferences();
-    const next = prefs.favoriteTeams.includes(teamName)
-      ? prefs.favoriteTeams.filter((team) => team !== teamName)
-      : [...prefs.favoriteTeams, teamName];
-
-    savePreferences({ favoriteTeams: next });
-  }, []);
-
-  const runAnalysis = useCallback(async () => {
-    if (!selectedFixture) return;
-
-    setIsAnalyzing(true);
-    setError(null);
-    setSaveMessage(null);
-    setProgressStep("fixture");
-    setProgressMessage("Starting analysis…");
-    setResult(null);
-    setActiveTab("analysis");
-
-    try {
-      await runAnalysisStream(selectedFixture.id, {
-        onProgress: (step, message) => {
-          setProgressStep(step);
-          setProgressMessage(message);
-        },
-        onResult: (analysis) => {
-          setResult(analysis);
-          setActiveTab("probabilities");
-        },
-        onError: (message) => {
-          throw new Error(message);
-        },
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Analysis failed");
-      setActiveTab("match");
-    } finally {
-      setIsAnalyzing(false);
-      setProgressStep(null);
-      setProgressMessage(null);
-    }
-  }, [selectedFixture]);
-
-  const saveAnalysis = useCallback(() => {
-    if (!result) return;
-
-    setIsSaving(true);
-    setSaveMessage(null);
-
-    try {
-      saveAnalysisResult(result);
-      setSaveMessage("Analysis saved locally with Polymarket snapshot.");
-    } catch (err) {
-      setSaveMessage(
-        err instanceof Error ? err.message : "Could not save analysis",
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  }, [result]);
-
-  const loadSavedResult = useCallback(
-    (saved: AnalysisResult) => {
-      setResult(saved);
-      setSelectedFixture(saved.matchData.fixture);
-      setMarket(saved.polymarket ?? null);
-      setActiveTab("analysis");
-      setSaveMessage(null);
-      setError(null);
-    },
-    [],
-  );
+  }, [query, selectedLeagueId, loadMarkets]);
 
   const handleDeleteSaved = useCallback((id: string) => {
     deleteSavedAnalysis(id);
+  }, []);
+
+  const handleLoadSaved = useCallback((saved: AnalysisResult) => {
+    window.location.href = `/match/${saved.fixtureId}`;
   }, []);
 
   useEffect(() => {
@@ -192,11 +88,12 @@ export default function HomePage() {
     async function loadInitialFixtures() {
       setIsSearching(true);
       try {
-        const params = new URLSearchParams();
-        const response = await fetch(`/api/fixtures/search?${params.toString()}`);
+        const response = await fetch("/api/fixtures/search");
         const data = await response.json();
         if (!cancelled && response.ok) {
-          setFixtures(data.fixtures ?? []);
+          const nextFixtures: FixtureSummary[] = data.fixtures ?? [];
+          setFixtures(nextFixtures);
+          void loadMarkets(nextFixtures);
         }
       } finally {
         if (!cancelled) setIsSearching(false);
@@ -207,94 +104,57 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadMarkets]);
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
-      <header className="space-y-2">
-        <p className="text-accent text-sm font-medium uppercase tracking-[0.2em]">
-          Match Analyst
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Polymarket Football AI Analyst
-        </h1>
-        <p className="text-muted max-w-3xl text-sm leading-7">
-          Pick a match, run analysis, compare probabilities to Polymarket, and
-          ask follow-up questions — all in one interactive workspace.
-        </p>
-      </header>
-
-      <ServiceStatus />
-
-      <WorkspaceTabs
-        active={activeTab}
-        onChange={setActiveTab}
-        hasResult={Boolean(result)}
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-5 py-10 sm:px-8">
+      <MatchSearchHeader
+        query={query}
+        leagues={leagues}
+        selectedLeagueId={selectedLeagueId}
+        isSearching={isSearching}
+        onQueryChange={setQuery}
+        onLeagueChange={setSelectedLeagueId}
+        onSearch={searchFixtures}
       />
 
-      {(isAnalyzing || progressStep) && (
-        <AnalysisProgress
-          activeStep={progressStep}
-          message={progressMessage}
-        />
-      )}
+      <div className="mt-6">
+        <ServiceStatus />
+      </div>
 
       {error && (
-        <div className="border-negative/40 bg-negative/10 text-negative rounded-xl border px-4 py-3 text-sm">
-          {error}
+        <p className="text-negative mt-4 text-sm">{error}</p>
+      )}
+
+      <section className="mt-4">
+        {fixtures.length === 0 && !isSearching && (
+          <p className="text-muted py-10 text-sm">No fixtures found.</p>
+        )}
+
+        {fixtures.map((fixture, index) => (
+          <MatchFeedCard
+            key={fixture.id}
+            fixture={fixture}
+            market={markets[fixture.id]}
+            muted={index > 0 && index % 4 === 0}
+          />
+        ))}
+      </section>
+
+      {savedItems.length > 0 && (
+        <div className="mt-10">
+          <SavedAnalyses
+            items={savedItems}
+            onLoad={handleLoadSaved}
+            onDelete={handleDeleteSaved}
+          />
         </div>
       )}
 
-      {activeTab === "match" && (
-        <MatchInput
-          query={query}
-          leagues={leagues}
-          selectedLeagueId={selectedLeagueId}
-          fixtures={fixtures}
-          selectedFixture={selectedFixture}
-          market={market}
-          favoriteTeams={favoriteTeams}
-          isSearching={isSearching}
-          onQueryChange={setQuery}
-          onLeagueChange={setSelectedLeagueId}
-          onSearch={searchFixtures}
-          onSelectFixture={handleSelectFixture}
-          onToggleFavorite={toggleFavorite}
-          onAnalyze={runAnalysis}
-          isAnalyzing={isAnalyzing}
-        />
-      )}
-
-      {activeTab === "analysis" && (
-        <AnalysisStream
-          result={result}
-          isLoading={isAnalyzing}
-          progressMessage={progressMessage}
-        />
-      )}
-
-      {activeTab === "probabilities" && (
-        <ProbabilityBreakdown result={result} />
-      )}
-
-      {activeTab === "insight" && (
-        <TradingInsight
-          result={result}
-          onSave={saveAnalysis}
-          isSaving={isSaving}
-          saveMessage={saveMessage}
-        />
-      )}
-
-      {activeTab === "ask" && <AskAnalyst result={result} />}
-
-      <SavedAnalyses
-        items={savedItems}
-        onLoad={loadSavedResult}
-        onDelete={handleDeleteSaved}
-      />
-
-      <Disclaimer />
+      <p className="text-muted mt-12 border-border border-t pt-6 text-xs leading-6">
+        Research and analysis only. Not financial, betting, or investment
+        advice. Polymarket prices shown for market context when available.
+      </p>
     </main>
   );
 }

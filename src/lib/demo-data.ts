@@ -4,6 +4,19 @@ import type { PolymarketMarketContext } from "@/types/polymarket";
 
 export const DEMO_FIXTURES: FixtureSummary[] = [
   {
+    id: 1000,
+    date: new Date().toISOString(),
+    league: {
+      id: 2,
+      name: "UEFA Champions League",
+      country: "World",
+    },
+    homeTeam: { id: 541, name: "Real Madrid" },
+    awayTeam: { id: 50, name: "Manchester City" },
+    venue: "Santiago Bernabéu",
+    status: "LIVE",
+  },
+  {
     id: 1001,
     date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
     league: {
@@ -37,8 +50,8 @@ export const DEMO_FIXTURES: FixtureSummary[] = [
       name: "UEFA Champions League",
       country: "World",
     },
-    homeTeam: { id: 50, name: "Manchester City" },
-    awayTeam: { id: 85, name: "Paris Saint Germain" },
+    homeTeam: { id: 157, name: "Bayern Munich" },
+    awayTeam: { id: 42, name: "Arsenal" },
     venue: "Etihad Stadium",
     status: "NS",
   },

@@ -1,17 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0b0f14;
-  --foreground: #e8edf4;
-  --surface: #121820;
-  --surface-elevated: #1a2230;
-  --border: #2a3545;
-  --muted: #8b9bb0;
-  --accent: #3b82f6;
-  --accent-soft: #1e3a5f;
-  --positive: #22c55e;
-  --negative: #ef4444;
-  --warning: #f59e0b;
+  --background: #f3efe6;
+  --foreground: #111111;
+  --surface: #faf8f3;
+  --surface-elevated: #ffffff;
+  --border: #d9d2c5;
+  --muted: #6f6a63;
+  --accent: #111111;
+  --accent-soft: #ebe6dc;
+  --positive: #1f6b3a;
+  --negative: #b42318;
+  --warning: #9a6700;
+  --poly-box: #111111;
 }
 
 @theme inline {
@@ -42,4 +43,19 @@ input,
 select {
   transition: color 150ms ease, background-color 150ms ease,
     border-color 150ms ease, opacity 150ms ease;
+}
+
+.editorial-label {
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.metric-label {
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--muted);
 }
