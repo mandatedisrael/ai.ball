@@ -3,6 +3,7 @@ import { Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 
 import { BRAND_TAGLINE, BRAND_TITLE } from "@/components/brand-name";
 import { FloatingBalls } from "@/components/floating-balls";
+import { FootballNewsTicker } from "@/components/football-news-ticker";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -46,11 +47,12 @@ export default function RootLayout({
         <ThemeProvider>
           <div className="app-bg pointer-events-none fixed inset-0" />
           <FloatingBalls />
-          <div className="relative z-[1] flex min-h-full flex-1 flex-col">
+          <div className="layout-with-ticker relative z-[1] flex min-h-full flex-1 flex-col">
             <SiteHeader />
             {children}
             <SiteFooter />
           </div>
+          <FootballNewsTicker />
         </ThemeProvider>
       </body>
     </html>

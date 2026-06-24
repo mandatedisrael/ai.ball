@@ -27,7 +27,7 @@ export function BetMarketRail({
   if (variant === "mobile") {
     return (
       <div
-        className="bet-rail-mobile animate-fade-in pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-4 lg:hidden"
+        className="bet-rail-mobile animate-fade-in pointer-events-none fixed inset-x-0 bottom-[var(--news-ticker-height)] z-40 px-4 pb-3 lg:hidden"
         aria-label={`${link.label} — opens in a new tab`}
       >
         <a

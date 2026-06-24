@@ -5,6 +5,23 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { BrandBall } from "@/components/brand-ball";
 import type { FootballNewsItem } from "@/types/news";
 
+const SOURCE_VARIANTS = [
+  "news-source-emerald",
+  "news-source-sky",
+  "news-source-violet",
+  "news-source-amber",
+  "news-source-rose",
+  "news-source-cyan",
+] as const;
+
+function sourceVariant(source: string, index: number): string {
+  const normalized = source.toLowerCase();
+  if (normalized.includes("bbc")) return "news-source-rose";
+  if (normalized.includes("guardian")) return "news-source-sky";
+  if (normalized.includes("ai.ball")) return "news-source-emerald";
+  return SOURCE_VARIANTS[index % SOURCE_VARIANTS.length];
+}
+
 export function FootballNewsTicker() {
   const [items, setItems] = useState<FootballNewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -20,7 +37,7 @@ export function FootballNewsTicker() {
           setItems(data.items);
         }
       } catch {
-        // Keep empty — skeleton shows until/unless items load.
+        // Skeleton remains until items load.
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -35,18 +52,19 @@ export function FootballNewsTicker() {
   const tickerItems = items.length > 0 ? [...items, ...items] : [];
 
   return (
-    <section className="animate-fade-up stagger-2 -mx-5 mb-10 sm:-mx-8">
-      <div className="mb-3 flex items-center gap-2 px-5 sm:px-8">
-        <BrandBall size={16} className="text-accent ball-wiggle" />
-        <h2 className="font-display text-sm font-semibold tracking-tight">
-          Football news
-        </h2>
-      </div>
-
-      <div className="news-ticker border-y border-border">
+    <aside
+      className="news-ticker-dock"
+      aria-label="Football news ticker"
+      role="complementary"
+    >
+      <div className="news-ticker">
         <div className="news-ticker-label">
-          <BrandBall size={12} className="ball-spin-slow" />
-          <span>Live</span>
+          <BrandBall size={14} className="ball-spin-slow text-white" />
+          <span className="news-ticker-heading">Football news</span>
+          <span className="news-ticker-live">
+            <span className="news-ticker-live-dot" />
+            Live
+          </span>
         </div>
 
         <div className="news-ticker-viewport" aria-live="polite">
@@ -73,10 +91,17 @@ export function FootballNewsTicker() {
                   rel="noopener noreferrer"
                   className="news-ticker-item"
                 >
-                  <span className="news-ticker-source">{item.source}</span>
+                  <span
+                    className={`news-ticker-source ${sourceVariant(item.source, index)}`}
+                  >
+                    {item.source}
+                  </span>
                   <span className="news-ticker-title">{item.title}</span>
-                  <span className="news-ticker-separator" aria-hidden>
-                    ·
+                  <span
+                    className={`news-ticker-separator news-ticker-separator-${index % 4}`}
+                    aria-hidden
+                  >
+                    ⚽
                   </span>
                 </a>
               ))}
@@ -84,6 +109,6 @@ export function FootballNewsTicker() {
           )}
         </div>
       </div>
-    </section>
+    </aside>
   );
 }

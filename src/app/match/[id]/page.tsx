@@ -201,7 +201,7 @@ export default function MatchDetailPage() {
 
   return (
     <>
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 py-8 pb-24 sm:px-8 lg:pb-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 py-8 pb-32 sm:px-8 lg:pb-8">
       <Link
         href="/"
         className="text-muted hover:text-accent mb-8 inline-flex items-center gap-1.5 text-sm font-medium"
