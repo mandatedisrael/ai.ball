@@ -18,6 +18,7 @@ interface FormTrendChartProps {
   awayTeam: string;
   homeForm: TeamForm;
   awayForm: TeamForm;
+  compact?: boolean;
 }
 
 function buildSeries(form: TeamForm, prefix: string) {
@@ -36,6 +37,7 @@ export function FormTrendChart({
   awayTeam,
   homeForm,
   awayForm,
+  compact = false,
 }: FormTrendChartProps) {
   const chartTheme = useChartTheme();
   const home = buildSeries(homeForm, "H");
@@ -46,29 +48,39 @@ export function FormTrendChart({
     [awayTeam]: away[index]?.points ?? 0,
   }));
 
+  const shell = compact
+    ? "rounded-xl border border-border bg-surface-elevated/35 p-3 sm:p-4 h-full"
+    : "card p-5";
+
   return (
-    <div className="card p-5">
-      <p className="label mb-4">Form trend (points)</p>
-      <div className="h-64 w-full">
+    <div className={shell}>
+      <p className="label mb-2">Form trend (points)</p>
+      <div className={compact ? "h-40 w-full" : "h-64 w-full"}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
+          <LineChart
+            data={data}
+            margin={compact ? { top: 4, right: 4, left: -18, bottom: 0 } : undefined}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
-            <XAxis dataKey="match" tick={{ fontSize: 12, fill: chartTheme.tick }} />
-            <YAxis tick={{ fontSize: 12, fill: chartTheme.tick }} />
+            <XAxis
+              dataKey="match"
+              tick={{ fontSize: compact ? 10 : 12, fill: chartTheme.tick }}
+            />
+            <YAxis tick={{ fontSize: compact ? 10 : 12, fill: chartTheme.tick }} />
             <Tooltip contentStyle={chartTheme.tooltip} />
             <Line
               type="monotone"
               dataKey={homeTeam}
               stroke="#16a34a"
-              strokeWidth={2}
-              dot={{ r: 3, fill: "#34d399" }}
+              strokeWidth={compact ? 1.5 : 2}
+              dot={{ r: compact ? 2 : 3, fill: "#34d399" }}
             />
             <Line
               type="monotone"
               dataKey={awayTeam}
               stroke="#0369a1"
-              strokeWidth={2}
-              dot={{ r: 3, fill: "#0369a1" }}
+              strokeWidth={compact ? 1.5 : 2}
+              dot={{ r: compact ? 2 : 3, fill: "#0369a1" }}
             />
           </LineChart>
         </ResponsiveContainer>

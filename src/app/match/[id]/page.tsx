@@ -10,6 +10,7 @@ import { AskAnalyst } from "@/components/ask-analyst";
 import { BetMarketRail } from "@/components/bet-market-rail";
 import { MatchLineups } from "@/components/match-lineups";
 import { MatchLivePanel } from "@/components/match-live-panel";
+import { MatchScorecard } from "@/components/match-scorecard";
 
 import { runAnalysisStream } from "@/lib/client/analyze-stream";
 import { readStashedFixture } from "@/lib/client/fixture-session";
@@ -218,25 +219,40 @@ export default function MatchDetailPage() {
       {fixture && (
         <header className="card mb-8 p-6 sm:p-8">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-muted mb-2 text-sm">{fixture.league.name}</p>
-              <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-                {fixture.homeTeam.name}
-                <span className="text-muted mx-2 font-normal">vs</span>
-                {fixture.awayTeam.name}
-              </h1>
-              {matchDetail && hasDisplayableScore(matchDetail) && (
-                <p className="mt-3 font-mono text-2xl font-bold tracking-tight sm:text-3xl">
-                  {matchDetail.score.home}
-                  <span className="text-muted mx-2 font-normal">–</span>
-                  {matchDetail.score.away}
-                  {live && formatMatchClock(matchDetail) && (
-                    <span className="text-negative ml-3 text-sm font-semibold">
-                      {formatMatchClock(matchDetail)}
-                    </span>
-                  )}
-                </p>
-              )}
+
+              <div className="mt-1">
+                <MatchScorecard
+                  homeTeam={fixture.homeTeam.name}
+                  awayTeam={fixture.awayTeam.name}
+                  homeScore={
+                    matchDetail && hasDisplayableScore(matchDetail)
+                      ? (matchDetail.score.home ?? 0)
+                      : undefined
+                  }
+                  awayScore={
+                    matchDetail && hasDisplayableScore(matchDetail)
+                      ? (matchDetail.score.away ?? 0)
+                      : undefined
+                  }
+                  halfTimeHome={matchDetail?.score.halfTimeHome}
+                  halfTimeAway={matchDetail?.score.halfTimeAway}
+                  goals={matchDetail?.goals}
+                  clock={
+                    live && matchDetail ? formatMatchClock(matchDetail) : null
+                  }
+                  probabilities={
+                    result
+                      ? {
+                          home: result.probabilities.home,
+                          away: result.probabilities.away,
+                          draw: result.probabilities.draw,
+                        }
+                      : undefined
+                  }
+                />
+              </div>
             </div>
             <div className="flex flex-col items-end gap-2.5">
               <div className="flex gap-2">

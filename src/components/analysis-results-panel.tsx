@@ -1,10 +1,7 @@
 "use client";
 
+import { AnalysisChartsGrid } from "@/components/analysis-charts-grid";
 import { AnalysisSourcePills } from "@/components/analysis-source-pills";
-import { FactorChart } from "@/components/charts/factor-chart";
-import { FormTrendChart } from "@/components/charts/form-trend-chart";
-import { H2HChart } from "@/components/charts/h2h-chart";
-import { ProbabilityChart } from "@/components/charts/probability-chart";
 import { TeeVerifiedBadge, TeeVerifiedCallout } from "@/components/tee-verified-badge";
 import { formatDelta, formatPercent } from "@/lib/probability";
 import { isTeeVerified } from "@/lib/tee-verified";
@@ -32,9 +29,6 @@ export function AnalysisResultsPanel({
     .filter((c) => c.delta !== undefined)
     .sort((a, b) => Math.abs(b.delta ?? 0) - Math.abs(a.delta ?? 0))[0];
 
-  const winProb = (
-    Math.max(result.probabilities.home, result.probabilities.away) * 100
-  ).toFixed(1);
   const teeVerified = isTeeVerified(result);
 
   return (
@@ -57,12 +51,9 @@ export function AnalysisResultsPanel({
 
         {teeVerified && <TeeVerifiedCallout className="mt-5" />}
 
-        <div className="mt-5">
-          <ProbabilityChart comparisons={result.comparisons} embedded />
-        </div>
+        <AnalysisChartsGrid result={result} />
 
-        <div className="mt-6 grid grid-cols-3 gap-3 sm:max-w-lg">
-          <MetricTile label="Win prob" value={`${winProb}%`} />
+        <div className="mt-6 grid max-w-md grid-cols-2 gap-3">
           <MetricTile label="Volatility" value={volatility} />
           <MetricTile label="Confidence" value={result.confidence} />
         </div>
@@ -162,21 +153,6 @@ export function AnalysisResultsPanel({
           </p>
         </div>
       )}
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        <FormTrendChart
-          homeTeam={result.matchData.fixture.homeTeam.name}
-          awayTeam={result.matchData.fixture.awayTeam.name}
-          homeForm={result.matchData.homeForm}
-          awayForm={result.matchData.awayForm}
-        />
-        <FactorChart factors={result.keyFactors} />
-        <H2HChart
-          matches={result.matchData.headToHead}
-          homeTeam={result.matchData.fixture.homeTeam.name}
-          awayTeam={result.matchData.fixture.awayTeam.name}
-        />
-      </div>
     </section>
   );
 }

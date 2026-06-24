@@ -43,59 +43,11 @@ export function MatchLivePanel({ detail, homeTeam, awayTeam }: MatchLivePanelPro
         )}
       </div>
 
-      {hasDisplayableScore(detail) && (
-        <div className="mb-5 grid grid-cols-[1fr_auto_1fr] items-center gap-4 rounded-2xl border border-border bg-surface-elevated/40 px-4 py-5">
-          <p className="truncate text-right text-sm font-semibold sm:text-base">
-            {homeTeam}
-          </p>
-          <div className="text-center">
-            <p className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-              {detail.score.home}
-              <span className="text-muted mx-2 font-normal">–</span>
-              {detail.score.away}
-            </p>
-            {detail.score.halfTimeHome != null && detail.score.halfTimeAway != null && (
-              <p className="text-muted mt-1 font-mono text-xs">
-                HT {detail.score.halfTimeHome}–{detail.score.halfTimeAway}
-              </p>
-            )}
-          </div>
-          <p className="truncate text-sm font-semibold sm:text-base">{awayTeam}</p>
-        </div>
-      )}
-
       {detail.statistics.home && detail.statistics.away && (
         <MatchStatsBar
           home={detail.statistics.home}
           away={detail.statistics.away}
         />
-      )}
-
-      {detail.goals.length > 0 && (
-        <section className="mt-5">
-          <p className="label mb-3">Goals</p>
-          <ul className="space-y-2">
-            {detail.goals.map((goal, index) => (
-              <li
-                key={`${goal.minute}-${goal.scorer}-${index}`}
-                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-elevated/30 px-3 py-2 text-sm"
-              >
-                <span className="text-muted font-mono text-xs">
-                  {goal.injuryTime ? `${goal.minute}+${goal.injuryTime}'` : `${goal.minute}'`}
-                </span>
-                <span className="min-w-0 flex-1 truncate">
-                  <span className="font-medium">{goal.scorer}</span>
-                  {goal.assist && (
-                    <span className="text-muted"> · {goal.assist}</span>
-                  )}
-                </span>
-                <span className="text-muted shrink-0 text-xs">
-                  {goal.homeScore}–{goal.awayScore}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
       )}
 
       {(detail.bookings.length > 0 || detail.substitutions.length > 0) && (
@@ -185,9 +137,7 @@ function MatchStatsBar({
                 className="bg-accent h-full transition-all duration-500"
                 style={{ width: `${homePct}%` }}
               />
-              <div
-                className="bg-foreground/25 h-full flex-1"
-              />
+              <div className="bg-foreground/25 h-full flex-1" />
             </div>
           </div>
         );

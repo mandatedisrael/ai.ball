@@ -70,84 +70,79 @@ export function AnalysisResearchStage({
         {isInference && <TeeVerifiedCallout className="mt-5" />}
 
         {isInference && (
-          <div className="mt-5 rounded-2xl border border-border bg-surface-elevated/35 p-4 sm:p-5">
-            <p className="label mb-1">Probability comparison</p>
-            <p className="text-muted mb-4 text-xs">AI model vs prediction market</p>
-            <ProbabilityChartSkeleton />
-          </div>
+          <ChartsSkeletonGrid homeTeam={homeTeam} awayTeam={awayTeam} />
         )}
 
         <p className="text-muted mt-4 text-sm">{hint}</p>
       </div>
-
-      <SecondaryChartSkeletonGrid homeTeam={homeTeam} awayTeam={awayTeam} />
     </section>
   );
 }
 
 const PROB_SKELETON_BARS: Array<[number, number]> = [
-  [72, 48],
-  [28, 18],
-  [20, 12],
+  [56, 38],
+  [22, 14],
+  [44, 28],
 ];
 
-function ProbabilityChartSkeleton() {
-  return (
-    <div className="flex h-48 items-end justify-center gap-6 px-4 sm:h-56 sm:gap-10">
-      {["Home", "Draw", "Away"].map((label, index) => {
-        const [modelHeight, marketHeight] = PROB_SKELETON_BARS[index];
-        return (
-          <div key={label} className="flex flex-col items-center gap-2">
-            <div className="flex items-end gap-2">
-              <div
-                className="analysis-shimmer w-7 rounded-t-md sm:w-9"
-                style={{ height: `${modelHeight}px` }}
-              />
-              <div
-                className="analysis-shimmer w-7 rounded-t-md opacity-70 sm:w-9"
-                style={{ height: `${marketHeight}px` }}
-              />
-            </div>
-            <span className="text-muted text-xs">{label}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function SecondaryChartSkeletonGrid({
+function ChartsSkeletonGrid({
   homeTeam,
   awayTeam,
 }: {
   homeTeam: string;
   awayTeam: string;
 }) {
-  const cards = [
-    { title: "Form trend", subtitle: `${homeTeam} / ${awayTeam}` },
+  const secondary = [
+    { title: "Form trend (points)", subtitle: `${homeTeam} / ${awayTeam}` },
     { title: "Factor weights", subtitle: "Weighted drivers" },
-    { title: "Head-to-head", subtitle: "Recent meetings" },
+    { title: "Head-to-head goals", subtitle: "Recent meetings" },
   ];
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      {cards.map((card, index) => (
-        <div
-          key={card.title}
-          className="card analysis-skeleton-card p-5"
-          style={{ animationDelay: `${index * 100}ms` }}
-        >
-          <div className="mb-4">
-            <p className="label mb-1">{card.title}</p>
-            <p className="text-muted text-xs">{card.subtitle}</p>
-          </div>
-          <div className="space-y-3">
-            <div className="analysis-shimmer h-2.5 w-4/5 rounded-full" />
-            <div className="analysis-shimmer h-2.5 w-full rounded-full" />
-            <div className="analysis-shimmer mt-6 h-24 w-full rounded-xl" />
-          </div>
+    <div className="mt-5 grid gap-3 lg:grid-cols-12 lg:gap-4">
+      <div className="rounded-xl border border-border bg-surface-elevated/35 p-3 sm:p-4 lg:col-span-4">
+        <p className="label mb-0.5">Probability comparison</p>
+        <p className="text-muted mb-2 text-xs">AI model vs prediction market</p>
+        <div className="flex h-44 items-end justify-center gap-4 px-2">
+          {["Home", "Draw", "Away"].map((label, index) => {
+            const [modelHeight, marketHeight] = PROB_SKELETON_BARS[index];
+            return (
+              <div key={label} className="flex flex-col items-center gap-1.5">
+                <div className="flex items-end gap-1.5">
+                  <div
+                    className="analysis-shimmer w-5 rounded-t-md sm:w-6"
+                    style={{ height: `${modelHeight}px` }}
+                  />
+                  <div
+                    className="analysis-shimmer w-5 rounded-t-md opacity-70 sm:w-6"
+                    style={{ height: `${marketHeight}px` }}
+                  />
+                </div>
+                <span className="text-muted text-[10px]">{label}</span>
+              </div>
+            );
+          })}
         </div>
-      ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:col-span-8 lg:grid-cols-3 lg:gap-4">
+        {secondary.map((card, index) => (
+          <div
+            key={card.title}
+            className="rounded-xl border border-border bg-surface-elevated/35 p-3 sm:p-4 analysis-skeleton-card"
+            style={{ animationDelay: `${index * 100}ms` }}
+          >
+            <p className="label mb-0.5">{card.title}</p>
+            <p className="text-muted mb-2 text-xs">{card.subtitle}</p>
+            <div className="space-y-2">
+              <div className="analysis-shimmer h-2 w-full rounded-full" />
+              <div className="analysis-shimmer h-2 w-4/5 rounded-full" />
+              <div className="analysis-shimmer h-2 w-full rounded-full" />
+              <div className="analysis-shimmer h-2 w-3/5 rounded-full" />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

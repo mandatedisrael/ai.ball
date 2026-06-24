@@ -26,6 +26,16 @@ export function formatPercent(value: number, digits = 0): string {
   return `${(value * 100).toFixed(digits)}%`;
 }
 
+/** Use explicit draw when provided; otherwise treat the remainder as draw. */
+export function resolveDrawProbability(
+  home: number,
+  away: number,
+  draw?: number,
+): number {
+  if (draw != null && draw >= 0) return draw;
+  return Math.max(0, 1 - home - away);
+}
+
 export function formatDelta(value?: number): string {
   if (value === undefined) return "—";
   const points = value * 100;

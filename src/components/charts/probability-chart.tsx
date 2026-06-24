@@ -17,11 +17,29 @@ import type { ProbabilityComparison } from "@/types/analysis";
 interface ProbabilityChartProps {
   comparisons: ProbabilityComparison[];
   embedded?: boolean;
+  compact?: boolean;
+}
+
+function chartShellClass(compact?: boolean, embedded?: boolean) {
+  if (compact) {
+    return "rounded-xl border border-border bg-surface-elevated/35 p-3 sm:p-4 h-full";
+  }
+  if (embedded) {
+    return "rounded-2xl border border-border bg-surface-elevated/35 p-4 sm:p-5";
+  }
+  return "card p-5";
+}
+
+function chartHeightClass(compact?: boolean, embedded?: boolean) {
+  if (compact) return "h-44 w-full";
+  if (embedded) return "h-72 w-full sm:h-80";
+  return "h-64 w-full";
 }
 
 export function ProbabilityChart({
   comparisons,
   embedded = false,
+  compact = false,
 }: ProbabilityChartProps) {
   const chartTheme = useChartTheme();
   const data = comparisons.map((row) => ({
@@ -34,11 +52,21 @@ export function ProbabilityChart({
   }));
 
   const hasMarket = data.some((row) => row.market !== undefined);
+  const peak = Math.max(
+    ...data.flatMap((row) => [row.model, row.market ?? 0]),
+    1,
+  );
+  const yMax = Math.min(100, Math.max(30, Math.ceil((peak + 6) / 5) * 5));
 
   const chart = (
-    <div className={embedded ? "h-72 w-full sm:h-80" : "h-64 w-full"}>
+    <div className={chartHeightClass(compact, embedded)}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} barGap={10} barCategoryGap="18%">
+        <BarChart
+          data={data}
+          barGap={compact ? 6 : 10}
+          barCategoryGap={compact ? "14%" : "18%"}
+          margin={compact ? { top: 4, right: 4, left: -18, bottom: 0 } : undefined}
+        >
           <CartesianGrid
             strokeDasharray="3 3"
             stroke={chartTheme.grid}
@@ -46,36 +74,41 @@ export function ProbabilityChart({
           />
           <XAxis
             dataKey="outcome"
-            tick={{ fontSize: 12, fill: chartTheme.tick }}
+            tick={{ fontSize: compact ? 10 : 12, fill: chartTheme.tick }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
             unit="%"
-            tick={{ fontSize: 12, fill: chartTheme.tick }}
+            tick={{ fontSize: compact ? 10 : 12, fill: chartTheme.tick }}
             axisLine={false}
             tickLine={false}
-            domain={[0, 100]}
+            domain={[0, yMax]}
+            ticks={compact ? [0, yMax / 2, yMax] : undefined}
           />
           <Tooltip contentStyle={chartTheme.tooltip} />
           <Legend
-            wrapperStyle={{ fontSize: "12px", paddingTop: "12px" }}
+            wrapperStyle={{
+              fontSize: compact ? "10px" : "12px",
+              paddingTop: compact ? "6px" : "12px",
+            }}
             iconType="circle"
+            iconSize={compact ? 8 : 10}
           />
           <Bar
             dataKey="model"
             name="AI Model"
             fill="var(--accent)"
-            radius={[6, 6, 0, 0]}
-            maxBarSize={48}
+            radius={[4, 4, 0, 0]}
+            maxBarSize={compact ? 28 : 48}
           />
           {hasMarket && (
             <Bar
               dataKey="market"
               name="Polymarket"
               fill="#3b82f6"
-              radius={[6, 6, 0, 0]}
-              maxBarSize={48}
+              radius={[4, 4, 0, 0]}
+              maxBarSize={compact ? 28 : 48}
             />
           )}
         </BarChart>
@@ -83,19 +116,10 @@ export function ProbabilityChart({
     </div>
   );
 
-  if (embedded) {
-    return (
-      <div className="rounded-2xl border border-border bg-surface-elevated/35 p-4 sm:p-5">
-        <p className="label mb-1">Probability comparison</p>
-        <p className="text-muted mb-4 text-xs">AI model vs prediction market</p>
-        {chart}
-      </div>
-    );
-  }
-
   return (
-    <div className="card p-5">
-      <p className="label mb-4">Probability comparison</p>
+    <div className={chartShellClass(compact, embedded)}>
+      <p className="label mb-0.5">Probability comparison</p>
+      <p className="text-muted mb-2 text-xs">AI model vs prediction market</p>
       {chart}
     </div>
   );
