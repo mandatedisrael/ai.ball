@@ -1,6 +1,8 @@
-# Match Analyst — Architecture
+# match⚽nalyst — Architecture
 
-Polymarket Football AI Analyst: a research tool that produces data-driven match probabilities and compares them to Polymarket prices when available. **Analysis only — not betting or financial advice.**
+**AI football analyst** for fans who want data-backed, TEE-verified match breakdowns before betting on [Polymarket](https://polymarket.com) or [Kalshi](https://kalshi.com). match⚽nalyst is not a sportsbook and not affiliated with either market — it attaches direct market links when a fixture is found. **Analysis only — not betting or financial advice.**
+
+**Live:** [https://match-analyst-black.vercel.app](https://match-analyst-black.vercel.app)
 
 ---
 
@@ -8,23 +10,25 @@ Polymarket Football AI Analyst: a research tool that produces data-driven match 
 
 ### 1.1 Purpose
 
-Users ask about upcoming football matches. The system:
+Football lovers pick a match. The system:
 
-1. Resolves the fixture from structured or natural-language input
+1. Resolves the fixture from search or league browse
 2. Fetches real football statistics from external APIs (never hallucinated)
-3. Runs inference via **0G Compute** with a strict analyst persona and JSON schema
-4. Optionally fetches **Polymarket Gamma API** prices for market context
-5. Renders four UI sections: Match Input, AI Analysis, Probability Breakdown, Trading Insight
+3. Loads live match detail when available (score, scorers, lineups, stats)
+4. Runs inference via **0G Router / Compute** inside a TEE-attested environment
+5. Optionally fetches **Polymarket** prices for model-vs-market comparison
+6. Surfaces a **bet CTA** — Polymarket when a market exists, otherwise a Kalshi deep link
+7. Renders analysis: charts, narrative, trading insight, and Ask Analyst follow-ups
 
 ### 1.2 Design Principles
 
 | Principle | Implementation |
 |-----------|----------------|
-| Data before inference | All stats injected into the LLM prompt as structured facts |
-| Football leads, market follows | Polymarket is context/comparison, not the primary signal |
-| Graceful degradation | Missing Polymarket market or thin liquidity → hide or warn, never error |
-| Verifiable AI | 0G Compute for decentralized inference; optional 0G Storage for memory |
-| Trader-friendly output | Probabilities, deltas, confidence — not narrative-only |
+| Football first | Stats and form drive the model; markets are context and comparison |
+| TEE-verified AI | Analysis marked TEE verified; inference via 0G with attestable execution |
+| Data before inference | All facts injected into the LLM prompt as structured JSON |
+| Graceful degradation | Missing Polymarket market → Kalshi fallback link; thin liquidity → warn, never hard-fail |
+| Research, not advice | Probabilities, deltas, confidence — plus clear disclaimer |
 
 ---
 
@@ -32,33 +36,35 @@ Users ask about upcoming football matches. The system:
 
 ```mermaid
 flowchart TB
-    User[User / Trader]
+    User[Football fan]
     UI[Next.js Frontend]
 
     subgraph Backend["Backend (API Routes)"]
         Orch[Analysis Orchestrator]
-        Football[Football Data Service]
+        Football[Football Provider Router]
         Poly[Polymarket Service]
+        Kalshi[Kalshi Link Builder]
         Weather[Weather Service]
-        Compute[0G Compute Service]
-        Memory[0G Storage Service]
+        Compute[0G Router / Compute]
     end
 
     subgraph External["External APIs"]
-        APIFootball[API-Football]
+        FootballData[football-data.org]
+        APIFootball[API-Football fallback]
         Gamma[Polymarket Gamma API]
         OWM[OpenWeatherMap]
-        ZGCompute[0G Compute Network]
-        ZGStorage[0G Storage Network]
+        ZG[0G Compute Network]
     end
 
     User --> UI
     UI --> Orch
-    Orch --> Football --> APIFootball
+    Orch --> Football
+    Football --> FootballData
+    Football -.-> APIFootball
     Orch --> Poly --> Gamma
+    UI --> Kalshi
     Orch --> Weather --> OWM
-    Orch --> Compute --> ZGCompute
-    Orch --> Memory --> ZGStorage
+    Orch --> Compute --> ZG
     Orch --> UI
 ```
 
@@ -66,40 +72,49 @@ flowchart TB
 
 ## 3. Data Sources
 
-### 3.1 Primary: API-Football (api-sports.io)
+### 3.1 Primary: football-data.org
+
+Configured via `FOOTBALL_DATA_API_KEY`. Free tier: **10 requests/minute**.
 
 | Endpoint | Use |
 |----------|-----|
-| `fixtures` | Upcoming matches, kickoff, venue |
-| `fixtures/headtohead` | H2H history |
-| `teams/statistics` | Season form, home/away splits |
-| `standings` | Table position, motivation context |
-| `injuries` | Unavailable players |
-| `fixtures/lineups` | Confirmed XIs (pre-kickoff) |
-| `fixtures/statistics` | Shots, possession, xG where available |
-| `fixtures/events` | Goals, cards (historical context) |
+| `/competitions/{code}/matches` | Fixtures by league and date range |
+| `/matches?status=LIVE` | Live fixtures |
+| `/matches/{id}` | Full match detail — score, goals, lineups, stats, cards, subs |
+| `/matches/{id}/head2head` | H2H history |
+| `/competitions/{code}/standings` | League table (not cups e.g. World Cup) |
+| `/teams/{id}/matches` | Recent form |
 
-**Tiers:** Free (100 req/day, prototype) → Pro $19/mo (launch) → Ultra $29/mo (scale).
+Provider router: `src/services/football/provider.ts` — prefers football-data when the key is set.
 
-### 3.2 Market Context: Polymarket Gamma API
+### 3.2 Fallback: API-Football (api-sports.io)
 
-- Base: `https://gamma-api.polymarket.com`
-- Sports: `/sports`, event/market lookup by slug or search
-- Read-only; no authentication for public market data
-- Used for **comparison only**, not as input to the model's football reasoning
+Used when `FOOTBALL_DATA_API_KEY` is absent. Adds **injuries** and richer live stats. Free tier ~100 req/day.
 
-### 3.3 Supplementary
+### 3.3 Market context: Polymarket Gamma API
+
+- Base: `https://gamma-api.polymarket.com` (env `POLYMARKET_GAMMA_BASE_URL`)
+- Search by team names; resolve match-winner (3-way) markets
+- Read-only; comparison and deep links only — not fed as primary football signal
+
+### 3.4 Betting links: Kalshi (fallback)
+
+No Kalshi API yet. `src/lib/betting-links.ts` builds URLs:
+
+- **Polymarket** when `market.found && market.url`
+- **Kalshi** otherwise — World Cup market slug when possible, else category or search URL
+
+UI: persistent bet CTA in match header (desktop pill + mobile bottom bar).
+
+### 3.5 Supplementary
 
 | Source | Use |
 |--------|-----|
-| OpenWeatherMap | Stadium weather (temp, rain, wind) |
-| StatsBomb Open Data | Optional offline xG calibration (not live) |
+| OpenWeatherMap | Stadium weather by venue geocode (optional) |
 
-### 3.4 User Memory: 0G Storage
+### 3.6 User data
 
-- Favorite teams and leagues
-- Saved predictions with Polymarket snapshot at analysis time
-- Optional accuracy tracking (model vs actual result)
+Browser `localStorage` only — saved analyses and session fixture stash. No server database.
 
 ---
 
@@ -110,263 +125,206 @@ sequenceDiagram
     participant U as User
     participant UI as Frontend
     participant O as Orchestrator
-    participant F as API-Football
+    participant F as Football API
     participant P as Polymarket
     participant W as Weather
-    participant C as 0G Compute
+    participant C as 0G Router
 
-    U->>UI: Select / describe match
-    UI->>O: POST /api/analyze { fixtureQuery }
+    U->>UI: Open match / search fixture
+    UI->>F: GET fixture + match detail
+    UI->>P: GET /api/fixtures/id/market
+    UI->>O: POST /api/analyze (SSE)
 
-    par Fetch football data
-        O->>F: fixtures, H2H, form, injuries, standings
-    and Resolve market (async)
-        O->>P: search sports markets for fixture
+    par Football bundle
+        O->>F: form, H2H, standings
+    and Market
+        O->>P: resolve active market
     and Weather
-        O->>W: forecast by stadium coords
+        O->>W: venue forecast
     end
 
-    O->>O: Build structured prompt + JSON schema
-    O->>C: inference (streaming)
-    C-->>O: analysis JSON + narrative
-    O->>O: Merge model probs + Polymarket implied probs
-    O-->>UI: SSE / JSON response
-    UI-->>U: Render 4 sections
+    O->>C: TEE inference (glm-5.1)
+    C-->>O: structured JSON + narrative
+    O->>O: comparisons, teeVerified flag
+    O-->>UI: SSE result
+    UI-->>U: Charts, scorecard, bet link
 ```
 
-### 4.1 Orchestrator Steps
+### 4.1 Orchestrator steps (`src/services/orchestrator/analyze.ts`)
 
-1. **Resolve fixture** — map teams + date → `fixture_id` (API-Football)
-2. **Batch fetch** — parallel requests; cache per fixture (TTL: 15 min pre-match, 5 min near kickoff)
-3. **Match Polymarket** — fuzzy match team names + competition → market slug; extract outcome prices
-4. **Build prompt** — inject all facts; forbid model from inventing stats
-5. **0G inference** — analyst system prompt + structured output schema
-6. **Post-process** — compute deltas (model − market), confidence, liquidity warnings
-7. **Persist** — optional save to 0G Storage
+1. Resolve fixture (API or session stash)
+2. `buildMatchDataBundle` — parallel football fetches
+3. `resolvePolymarketMarket` — fuzzy team + league match
+4. Optional weather for venue
+5. `runZerogAnalysis` — analyst prompt + JSON schema
+6. `buildComparisons` — model vs Polymarket implied probs
+7. Stream progress: fixture → football → polymarket → weather → inference → complete
 
-### 4.2 LLM Output Schema
+### 4.2 LLM output schema
 
 ```json
 {
-  "probabilities": {
-    "home": 0.58,
-    "draw": 0.25,
-    "away": 0.17
-  },
+  "probabilities": { "home": 0.58, "draw": 0.25, "away": 0.17 },
   "confidence": "medium",
-  "narrative": "Conversational analysis paragraph(s)...",
-  "key_factors": [
-    { "factor": "Home form", "impact": "positive", "weight": 0.25, "detail": "4W in last 5" },
-    { "factor": "Injuries", "impact": "negative", "weight": 0.15, "detail": "Key midfielder out" }
-  ],
-  "risks": ["Lineups not confirmed", "Derby volatility"],
-  "trading_insight": "Model sees home win ~6% above market; driven by form and injury edge."
+  "narrative": "...",
+  "key_factors": [{ "factor": "...", "impact": "positive", "weight": 0.25, "detail": "..." }],
+  "risks": ["..."],
+  "trading_insight": "..."
 }
 ```
 
-Probabilities must sum to ~1.0 (±0.02). Post-validate and normalize if needed.
+Probabilities normalized to sum ~1.0. Draw shown explicitly in UI; if home + away &lt; 100%, remainder is displayed as draw.
 
-### 4.3 0G Compute Integration
+### 4.3 0G integration
 
-Pattern (aligned with existing `0g-route` broker setup):
-
-- Initialize `@0glabs/0g-serving-broker` with wallet + RPC
-- Fund ledger for inference credits
-- Select football-analyst provider / model on 0G marketplace
-- Stream tokens to frontend via SSE
-- Optional: verify response signatures for "AI-backed" saved ideas
+- **Router:** `ZEROG_ROUTER_API_KEY`, model `glm-5.1` (`ZEROG_ROUTER_MODEL`)
+- Lazy SDK load for serverless compatibility
+- Responses flagged `teeVerified: true` when inference succeeds
 
 ---
 
-## 5. Polymarket Integration
+## 5. Frontend Architecture
 
-### 5.1 Fixture → Market Matching
+### 5.1 Stack
 
-1. Query Gamma `/sports` or search events by team names
-2. Normalize names (e.g. "Man Utd" ↔ "Manchester United")
-3. Prefer **Match Winner** market; support BTTS / O-U in Phase 2
-4. Store: `market_slug`, `volume`, `liquidity`, `outcome_prices[]`, `fetched_at`
+- **Next.js 16** (App Router)
+- **React 19**, **TypeScript**, **Tailwind CSS v4**
+- **Recharts** for probability, form, factor, H2H charts
+- **SSE** for analysis streaming
 
-### 5.2 Implied Probabilities
-
-Convert Polymarket outcome prices to percentages. If prices don't sum to 100% (spread), normalize or show raw + note.
-
-### 5.3 Display Rules (by UI section)
-
-| Section | Polymarket content |
-|---------|-------------------|
-| **Match Input** | Badge: market found / not found; volume; market type selector |
-| **AI Analysis** | At most one contextual sentence; link to Breakdown |
-| **Probability Breakdown** | **Primary display** — side-by-side table + bars + Δ column |
-| **Trading Insight** | Interpretation only (largest gap, market lean, caveats, external link) |
-
-### 5.4 Edge Cases
-
-| Case | Behavior |
-|------|----------|
-| No market | Hide Polymarket column; copy: "No active Polymarket market" |
-| Low liquidity | Show prices + warning badge |
-| Multiple markets | Dropdown in Match Input; default Match Winner |
-| Stale prices | Show `fetched_at`; refresh button |
-
----
-
-## 6. Frontend Architecture
-
-### 6.1 Stack
-
-- **Next.js 14+** (App Router)
-- **TypeScript**
-- **CSS Modules** or Tailwind (TBD at scaffold)
-- **SSE** for streaming AI Analysis section
-
-### 6.2 Page Layout
+### 5.2 Match page layout
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│ Header — logo, favorites, saved analyses                │
-├─────────────────────────────────────────────────────────┤
-│ MATCH INPUT                                             │
-│ Team search · league · date · [Polymarket ✓ $38k]     │
-├─────────────────────────────────────────────────────────┤
-│ AI ANALYSIS (streaming)                                 │
-├─────────────────────────────────────────────────────────┤
-│ PROBABILITY BREAKDOWN                                   │
-│ Home │ AI 58% │ Poly 52% │ +6%                         │
-│ Draw │ AI 25% │ Poly 28% │ -3%                         │
-│ Away │ AI 17% │ Poly 20% │ -3%                         │
-├─────────────────────────────────────────────────────────┤
-│ TRADING INSIGHT + [Save] [View on Polymarket ↗]         │
-├─────────────────────────────────────────────────────────┤
-│ Disclaimer — research only, not advice                  │
-└─────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│ Header — match⚽nalyst, theme toggle                        │
+├────────────────────────────────────────────────────────────┤
+│ Match card — score, scorers, per-team win %, draw %        │
+│              bet CTA (Polymarket / Kalshi)                 │
+├────────────────────────────────────────────────────────────┤
+│ Live match centre — stats, cards, subs (when available)    │
+│ Lineups — formations, starting XI, bench                   │
+├────────────────────────────────────────────────────────────┤
+│ Analysis — TEE callout → chart grid (prob + form + factors)│
+│            volatility / confidence → narrative → insight     │
+│ Ask Analyst — follow-up chat                               │
+└────────────────────────────────────────────────────────────┘
 ```
 
-### 6.3 Key Components
+### 5.3 Key components
 
 | Component | Responsibility |
 |-----------|----------------|
-| `MatchInput` | Fixture search, favorites, market badge |
-| `AnalysisStream` | SSE consumer, markdown narrative |
-| `ProbabilityBreakdown` | Dual bars, delta chips |
-| `TradingInsight` | Gap summary, confidence, CTAs |
-| `SavedAnalyses` | List from 0G Storage |
+| `MatchScorecard` | Score, scorers, win/draw % under team names |
+| `BetMarketRail` | Polymarket or Kalshi CTA |
+| `MatchLivePanel` | Live stats, cards, substitutions |
+| `MatchLineups` | Confirmed lineups from match detail API |
+| `AnalysisChartsGrid` | Compact side-by-side chart row |
+| `AnalysisResultsPanel` | TEE badge, narrative, trading insight |
+| `AskAnalyst` | Grounded follow-up Q&A |
 
 ---
 
-## 7. API Routes (Planned)
+## 6. API Routes
 
 | Route | Method | Description |
 |-------|--------|-------------|
-| `/api/fixtures/search` | GET | Search upcoming fixtures by team/league |
-| `/api/fixtures/[id]/market` | GET | Polymarket resolution for fixture |
-| `/api/analyze` | POST | Full pipeline; returns SSE stream |
-| `/api/user/preferences` | GET/PUT | Favorite teams/leagues (0G Storage) |
-| `/api/saved` | GET/POST | Saved analyses |
+| `/api/fixtures/search` | GET | Search fixtures by team/league |
+| `/api/fixtures/[id]` | GET | Fixture summary |
+| `/api/fixtures/[id]/detail` | GET | Live detail, lineups, goals (polls when live) |
+| `/api/fixtures/[id]/market` | GET | Polymarket resolution |
+| `/api/analyze` | POST | Full pipeline; SSE stream |
+| `/api/chat` | POST | Ask Analyst follow-ups |
+| `/api/health` | GET | Provider status, rate-limit headers |
+| `/api/leagues` | GET | Supported competitions |
 
 ---
 
-## 8. Caching & Rate Limits
+## 7. Caching & Rate Limits
 
 | Data | TTL | Notes |
 |------|-----|-------|
-| Fixture list | 1 h | Per league |
-| Pre-match stats | 15 min | Refresh on user action |
-| Lineups | 5 min | Near kickoff |
-| Polymarket prices | 2 min | Respect Gamma rate limits |
-| 0G inference | — | No cache; save output to Storage |
+| Fixture list | 5 min | football-data default revalidate |
+| Match detail (live) | no-store | Client polls every 30s |
+| Match detail (finished) | 60s | CDN stale-while-revalidate |
+| Polymarket | no-store on analyze | Cached cautiously on market route |
+| 0G inference | — | No cache |
 
-API-Football budget (Pro): 7,500 req/day — batch endpoints; avoid per-poll during streaming.
-
----
-
-## 9. Security & Configuration
-
-- All API keys server-side only (`API_FOOTBALL_KEY`, `ZEROG_PRIVATE_KEY`, etc.)
-- `.env.local` from `.env.example`; never commit secrets
-- Rate limit `/api/analyze` per IP / session
-- Disclaimer on every analysis response
+football-data.org: track `X-Requests-Available-Minute` in `/api/health`.
 
 ---
 
-## 10. Deployment
+## 8. Security & Configuration
+
+- API keys server-side only — see `.env.example`
+- Never commit `.env.local`
+- Disclaimer on analysis and market links
+
+**Required for production:**
+
+- `FOOTBALL_DATA_API_KEY`
+- `ZEROG_ROUTER_API_KEY`
+- `ZEROG_ROUTER_MODEL=glm-5.1`
+
+---
+
+## 9. Deployment
 
 | Target | Role |
 |--------|------|
 | Vercel | Next.js frontend + API routes |
-| 0G Testnet | Compute + Storage (dev) |
-| 0G Mainnet | Production inference (when ready) |
-
-Environment variables documented in `.env.example`.
+| GitHub | `mandatedisrael/matchAnalyst` |
 
 ---
 
-## 11. MVP Scope
-
-### Phase 1 (MVP)
-
-- [ ] Fixture search (5–10 leagues, next 7 days)
-- [ ] API-Football data fetch (form, H2H, injuries, standings)
-- [ ] 0G Compute analysis with structured probabilities
-- [ ] Polymarket comparison in Probability Breakdown
-- [ ] Four-section UI
-- [ ] Save analysis (local or 0G Storage)
-
-### Phase 2
-
-- [ ] Favorite teams memory
-- [ ] Additional market types (BTTS, O/U)
-- [ ] Lineup refresh near kickoff
-- [ ] Accuracy tracking vs results
-- [ ] "AI-backed market idea" export
-
-### Phase 3
-
-- [ ] Multi-match watchlist
-- [ ] Historical model calibration dashboard
-- [ ] LoRA / fine-tuned analyst on 0G Compute
-
----
-
-## 12. Project Structure (Planned)
+## 10. Project structure
 
 ```
 matchAnalyst/
-├── architecture.md          # This document
+├── architecture.md
 ├── README.md
-├── package.json
-├── .env.example
 ├── src/
-│   ├── app/                 # Next.js App Router
-│   │   ├── page.tsx         # Main analyst UI
-│   │   └── api/
-│   │       ├── analyze/
-│   │       ├── fixtures/
-│   │       └── saved/
-│   ├── components/
-│   │   ├── MatchInput/
-│   │   ├── AnalysisStream/
-│   │   ├── ProbabilityBreakdown/
-│   │   └── TradingInsight/
+│   ├── app/                    # App Router pages + API
+│   ├── components/             # UI including charts, scorecard, bet rail
 │   ├── services/
-│   │   ├── football/        # API-Football client
-│   │   ├── polymarket/      # Gamma API client
-│   │   ├── weather/
-│   │   ├── zerog-compute/
-│   │   └── zerog-storage/
+│   │   ├── football-data/      # Primary football client
+│   │   ├── football/           # API-Football fallback + provider router
+│   │   ├── polymarket/
+│   │   ├── orchestrator/
+│   │   └── zerog/
 │   ├── lib/
-│   │   ├── prompts/         # Analyst system prompt
-│   │   └── schemas/         # Zod validation
+│   │   ├── betting-links.ts    # Polymarket vs Kalshi URLs
+│   │   └── probability.ts
 │   └── types/
-└── public/
+└── .env.example
 ```
 
 ---
 
-## 13. References
+## 11. Roadmap
+
+### Shipped
+
+- [x] Fixture search and league browse (football-data primary)
+- [x] TEE-verified 0G analysis with streaming progress
+- [x] Polymarket comparison charts + Kalshi fallback links
+- [x] Live match centre, lineups, goal scorers
+- [x] Per-team win rates + draw remainder
+- [x] Ask Analyst, browser-local save
+
+### Next
+
+- [ ] Kalshi API for exact market resolution
+- [ ] Additional Polymarket market types (BTTS, O/U)
+- [ ] Favorite teams and kickoff reminders
+- [ ] Shareable analysis cards
+- [ ] Model accuracy tracking vs results
+
+---
+
+## 12. References
 
 - [0G Compute docs](https://docs.0g.ai/developer-hub/building-on-0g/compute-network/overview)
-- [0G Storage docs](https://docs.0g.ai/developer-hub/building-on-0g/storage/overview)
+- [football-data.org](https://www.football-data.org)
 - [API-Football](https://www.api-football.com/documentation-v3)
 - [Polymarket Gamma API](https://gamma-api.polymarket.com)
-- [football-data.org](https://www.football-data.org) (alternative free tier)
+- [Kalshi](https://kalshi.com)

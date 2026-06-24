@@ -11,4 +11,4 @@ export function BrandName({ className = "" }: BrandNameProps) {
 }
 
 export const BRAND_TITLE = "match⚽nalyst";
-export const BRAND_TAGLINE = "Football AI Analyst";
+export const BRAND_TAGLINE = "AI football analyst";

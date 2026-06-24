@@ -24,7 +24,7 @@ const themeInitScript = `(function(){try{var k='matchanalyst-theme';var s=localS
 export const metadata: Metadata = {
   title: `${BRAND_TITLE} — ${BRAND_TAGLINE}`,
   description:
-    "AI-powered football match analysis with probability models and Polymarket market context",
+    "TEE-verified AI football analysis backed by data — with Polymarket and Kalshi market links for fans researching before they bet",
 };
 
 export default function RootLayout({

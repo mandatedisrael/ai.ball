@@ -1,39 +1,38 @@
-# Match Analyst
+# match⚽nalyst
 
-**Polymarket Football AI Analyst** — an intelligent AI agent specialized in football (soccer) match analysis.
+**AI football analyst** for fans who want data-backed, TEE-verified match breakdowns before placing a bet on [Polymarket](https://polymarket.com) or [Kalshi](https://kalshi.com).
 
-Users ask about upcoming matches across major leagues and competitions. The agent researches team form, head-to-head records, injuries, motivation, weather, and referee context, then outputs clear probability estimates with detailed reasoning. When available, Polymarket prices are shown for **market context only** — not as betting advice.
+match⚽nalyst is not a sportsbook and not a Polymarket product. It researches fixtures across major leagues and competitions, runs analysis in 0G’s Trusted Execution Environment, and surfaces win/draw/away probabilities with clear reasoning. When a prediction market exists for the match, a direct link to **Polymarket** (or **Kalshi** as fallback) is attached so you can compare the model to live market prices.
 
-## Core Features
+**Live:** [https://match-analyst-black.vercel.app](https://match-analyst-black.vercel.app)
 
-- Natural-language or structured match input (Premier League, La Liga, Champions League, World Cup qualifiers, etc.)
-- Data-driven analysis from API-Football (form, H2H, injuries, standings, lineups)
-- Polymarket-style probability output: `Home Win: 58% | Draw: 25% | Away Win: 17%`
-- Side-by-side comparison with Polymarket odds when a market exists
-- Interactive workspace with tabbed sections and live analysis progress
-- Ask Analyst — conversational follow-ups grounded in the current analysis
-- Favorite teams and saved research stored in your browser (no server database)
+## What you get
 
-## Tech Stack
+- **TEE-verified AI analysis** — inference runs in an attestable 0G environment; responses are marked as TEE verified
+- **Data-backed research** — team form, head-to-head, standings, weather, and match context from football APIs
+- **Live match centre** — scores, goal scorers, lineups, stats, cards, and subs when the provider publishes them
+- **Probability charts** — AI model vs Polymarket odds side by side (home / draw / away)
+- **Per-team win rates** — home and away win % plus draw when they don’t sum to 100%
+- **One-click market links** — bet CTA opens Polymarket when a market is found, otherwise Kalshi
+- **Ask Analyst** — follow-up questions grounded in the current match analysis
+- **Save in browser** — bookmark analyses locally (no account or server database)
+
+## Supported competitions
+
+Premier League, La Liga, Serie A, Bundesliga, Ligue 1, Champions League, Europa League, FIFA World Cup, and more via [football-data.org](https://www.football-data.org/) (primary) with API-Football fallback.
+
+## Tech stack
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | Next.js, React, TypeScript |
-| AI Analyst | 0G Compute Network |
-| User data | Browser localStorage |
-| Football Data | API-Football (api-sports.io) |
-| Market Context | Polymarket Gamma API |
-| Weather | OpenWeatherMap |
+| Frontend | Next.js, React, TypeScript, Tailwind CSS |
+| AI analyst | 0G Compute / Router (`glm-5.1`) |
+| Football data | football-data.org (primary), API-Football (fallback) |
+| Markets | Polymarket Gamma API; Kalshi deep links |
+| Weather | OpenWeatherMap (optional) |
+| Storage | Browser `localStorage` only |
 
-## UI Sections
-
-1. **Match Input** — fixture search, league filter, Polymarket market badge
-2. **AI Analysis** — conversational, data-driven match breakdown
-3. **Probability Breakdown** — model vs Polymarket comparison (primary market display)
-4. **Trading Insight** — divergence summary, confidence caveats, save CTA
-5. **Ask Analyst** — interactive follow-up Q&A on the current match
-
-## Getting Started
+## Getting started
 
 ```bash
 pnpm install
@@ -41,30 +40,36 @@ cp .env.example .env.local
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Without API keys the app runs in **demo mode** with sample fixtures and analysis. Add `API_FOOTBALL_KEY` and `ZEROG_PRIVATE_KEY` for live data and 0G Compute inference.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Production deploy (Vercel)
+**Recommended env vars** (see `.env.example`):
 
-Live app: [https://match-analyst-black.vercel.app](https://match-analyst-black.vercel.app)
-
-1. Import the GitHub repo in [Vercel](https://vercel.com)
-2. Set environment variables from `.env.example`
-3. Deploy — no database or Redis required
+| Variable | Purpose |
+|----------|---------|
+| `FOOTBALL_DATA_API_KEY` | Primary fixture & match data |
+| `ZEROG_ROUTER_API_KEY` | AI analysis (required for live inference) |
+| `ZEROG_ROUTER_MODEL` | e.g. `glm-5.1` |
+| `API_FOOTBALL_KEY` | Fallback football provider |
+| `OPENWEATHER_API_KEY` | Optional venue weather |
 
 ```bash
 pnpm check   # lint + typecheck
 pnpm build
 ```
 
-Saved analyses and favorite teams persist in the user's browser. API routes handle football data, Polymarket lookup, analysis, and follow-up chat only.
+## Deploy (Vercel)
 
-## Documentation
+1. Import the repo in [Vercel](https://vercel.com)
+2. Add the env vars above (at minimum `FOOTBALL_DATA_API_KEY` and `ZEROG_ROUTER_API_KEY`)
+3. Deploy — no database or Redis required
 
-See [architecture.md](./architecture.md) for system design, data flows, API contracts, and deployment notes.
+## Architecture
+
+See [architecture.md](./architecture.md) for data flows, API routes, and integration details.
 
 ## Disclaimer
 
-This product provides **research and analysis only**. It is not financial, betting, or investment advice. Polymarket prices are shown for informational context.
+match⚽nalyst provides **research and analysis only**. It is not financial, betting, or investment advice. Prediction-market links are for convenience and informational context. Always gamble responsibly and within your jurisdiction’s rules.
 
 ## License
 
