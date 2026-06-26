@@ -225,6 +225,8 @@ export default function MatchDetailPage() {
                 <MatchScorecard
                   homeTeam={fixture.homeTeam.name}
                   awayTeam={fixture.awayTeam.name}
+                  homeLogo={fixture.homeTeam.logo}
+                  awayLogo={fixture.awayTeam.logo}
                   homeScore={
                     matchDetail && hasDisplayableScore(matchDetail)
                       ? (matchDetail.score.home ?? 0)

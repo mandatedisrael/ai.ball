@@ -1,5 +1,6 @@
 "use client";
 
+import { TeamLogo } from "@/components/team-logo";
 import { formatGoalMinute, goalsForTeam } from "@/lib/match-goals";
 import { resolveDrawProbability } from "@/lib/probability";
 import type { MatchGoal } from "@/types/match-detail";
@@ -13,6 +14,8 @@ interface MatchProbabilities {
 interface MatchScorecardProps {
   homeTeam: string;
   awayTeam: string;
+  homeLogo?: string;
+  awayLogo?: string;
   homeScore?: number;
   awayScore?: number;
   halfTimeHome?: number | null;
@@ -25,6 +28,8 @@ interface MatchScorecardProps {
 export function MatchScorecard({
   homeTeam,
   awayTeam,
+  homeLogo,
+  awayLogo,
   homeScore,
   awayScore,
   halfTimeHome,
@@ -58,9 +63,12 @@ export function MatchScorecard({
     <div className="w-full max-w-2xl">
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-x-4 gap-y-3 sm:gap-x-8">
         <div className="min-w-0 text-right">
-          <p className="font-display text-base font-bold leading-tight sm:text-lg">
-            {homeTeam}
-          </p>
+          <div className="flex items-center justify-end gap-2">
+            <p className="font-display text-base font-bold leading-tight sm:text-lg">
+              {homeTeam}
+            </p>
+            <TeamLogo name={homeTeam} logo={homeLogo} size={32} />
+          </div>
           <TeamGoalScorers goals={homeGoals} align="right" />
           {homeWinPct != null && (
             <p className="text-accent mt-2 font-mono text-sm font-bold sm:text-base">
@@ -102,9 +110,12 @@ export function MatchScorecard({
         </div>
 
         <div className="min-w-0 text-left">
-          <p className="font-display text-base font-bold leading-tight sm:text-lg">
-            {awayTeam}
-          </p>
+          <div className="flex items-center gap-2">
+            <TeamLogo name={awayTeam} logo={awayLogo} size={32} />
+            <p className="font-display text-base font-bold leading-tight sm:text-lg">
+              {awayTeam}
+            </p>
+          </div>
           <TeamGoalScorers goals={awayGoals} align="left" />
           {awayWinPct != null && (
             <p className="text-accent mt-2 font-mono text-sm font-bold sm:text-base">

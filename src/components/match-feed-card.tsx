@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { BrandBall } from "@/components/brand-ball";
+import { MatchTeamsHeading } from "@/components/match-teams-heading";
 import { stashFixtureForNavigation } from "@/lib/client/fixture-session";
 import {
   buildMatchPreview,
@@ -41,17 +42,10 @@ export function MatchFeedCard({ fixture, market, index = 0 }: MatchFeedCardProps
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <p className="label mb-1.5">{fixture.league.name}</p>
-          <h2 className="font-display text-lg font-bold tracking-tight transition-colors group-hover:text-accent sm:text-xl">
-            {fixture.homeTeam.name}
-            <span className="text-muted mx-2 inline-flex items-center gap-1.5 font-normal">
-              <BrandBall
-                size={14}
-                className="text-accent opacity-40 transition-opacity group-hover:opacity-100 group-hover-ball-roll"
-              />
-              vs
-            </span>
-            {fixture.awayTeam.name}
-          </h2>
+          <MatchTeamsHeading
+            homeTeam={fixture.homeTeam}
+            awayTeam={fixture.awayTeam}
+          />
         </div>
         {live && (
           <span className="bg-negative/12 text-negative live-pulse flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.68rem] font-bold tracking-wide uppercase">

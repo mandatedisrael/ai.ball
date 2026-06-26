@@ -3,6 +3,8 @@
 import Link from "next/link";
 
 import { BrandBall } from "@/components/brand-ball";
+import { MatchTeamsHeading } from "@/components/match-teams-heading";
+import { TeamLogo } from "@/components/team-logo";
 import { stashFixtureForNavigation } from "@/lib/client/fixture-session";
 import {
   buildMatchPreview,
@@ -35,7 +37,10 @@ export function TeamSpotlightCard({
             <BrandBall size={12} className="text-accent ball-bounce" />
             Next match found
           </p>
-          <h2 className="text-lg font-semibold">{team.name}</h2>
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
+            <TeamLogo name={team.name} logo={team.logo} size={24} />
+            {team.name}
+          </h2>
         </div>
         <span className="text-muted text-xs">{team.country}</span>
       </div>
@@ -56,11 +61,11 @@ export function TeamSpotlightCard({
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-muted mb-1 text-sm">{nextFixture.league.name}</p>
-              <h3 className="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
-                {nextFixture.homeTeam.name}
-                <span className="text-muted mx-2 font-normal">vs</span>
-                {nextFixture.awayTeam.name}
-              </h3>
+              <MatchTeamsHeading
+                homeTeam={nextFixture.homeTeam}
+                awayTeam={nextFixture.awayTeam}
+                size="lg"
+              />
             </div>
             {live && (
               <span className="bg-negative/15 text-negative live-pulse flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold">
