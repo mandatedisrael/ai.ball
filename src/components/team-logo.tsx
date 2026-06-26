@@ -2,19 +2,24 @@
 
 import { useState } from "react";
 
+import { TBD_TEAM_NAME } from "@/lib/team-display";
+
 interface TeamLogoProps {
-  name: string;
-  logo?: string;
+  name?: string | null;
+  logo?: string | null;
   size?: number;
   className?: string;
 }
 
 function teamInitials(name: string): string {
-  const words = name.trim().split(/\s+/).filter(Boolean);
+  const safe = name.trim();
+  if (!safe || safe === TBD_TEAM_NAME) return "?";
+
+  const words = safe.split(/\s+/).filter(Boolean);
   if (words.length >= 2) {
     return `${words[0][0] ?? ""}${words[1][0] ?? ""}`.toUpperCase();
   }
-  return name.slice(0, 2).toUpperCase();
+  return safe.slice(0, 2).toUpperCase();
 }
 
 export function TeamLogo({
@@ -24,12 +29,13 @@ export function TeamLogo({
   className = "",
 }: TeamLogoProps) {
   const [failed, setFailed] = useState(false);
-  const showImage = Boolean(logo) && !failed;
+  const safeName = name?.trim() || TBD_TEAM_NAME;
+  const showImage = Boolean(logo) && !failed && safeName !== TBD_TEAM_NAME;
 
   if (showImage) {
     return (
       <img
-        src={logo}
+        src={logo ?? undefined}
         alt=""
         width={size}
         height={size}
@@ -48,7 +54,7 @@ export function TeamLogo({
       style={{ width: size, height: size }}
       aria-hidden
     >
-      {teamInitials(name)}
+      {teamInitials(safeName)}
     </span>
   );
 }

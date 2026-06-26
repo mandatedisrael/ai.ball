@@ -1,3 +1,4 @@
+import { normalizeTeamSummary } from "@/lib/team-display";
 import type { FixtureSummary } from "@/types/fixture";
 import { footballFetch } from "@/services/football/client";
 
@@ -56,16 +57,16 @@ export function mapFixture(item: ApiFootballFixture): FixtureSummary {
       country: item.league.country,
       logo: item.league.logo,
     },
-    homeTeam: {
+    homeTeam: normalizeTeamSummary({
       id: item.teams.home.id,
       name: item.teams.home.name,
       logo: item.teams.home.logo,
-    },
-    awayTeam: {
+    }),
+    awayTeam: normalizeTeamSummary({
       id: item.teams.away.id,
       name: item.teams.away.name,
       logo: item.teams.away.logo,
-    },
+    }),
     venue: item.fixture.venue?.name,
     status: item.fixture.status.short,
   };

@@ -3,6 +3,7 @@ import {
   getSeasonForLeague,
   WORLD_CUP_LEAGUE_ID,
 } from "@/lib/leagues";
+import { displayTeamName } from "@/lib/team-display";
 import type {
   FixtureSummary,
   HeadToHeadMatch,
@@ -155,8 +156,8 @@ export async function buildFootballDataMatchBundle(
 
   const headToHead: HeadToHeadMatch[] = h2hData.matches.map((match) => ({
     date: match.utcDate.slice(0, 10),
-    homeTeam: match.homeTeam.name,
-    awayTeam: match.awayTeam.name,
+    homeTeam: displayTeamName(match.homeTeam.name),
+    awayTeam: displayTeamName(match.awayTeam.name),
     homeGoals: match.score?.fullTime?.home ?? 0,
     awayGoals: match.score?.fullTime?.away ?? 0,
   }));

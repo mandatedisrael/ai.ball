@@ -1,10 +1,11 @@
 import type { FixtureSummary } from "@/types/fixture";
+import { normalizeTeamSummary } from "@/lib/team-display";
 
 export interface FootballDataTeam {
-  id: number;
-  name: string;
+  id: number | null;
+  name: string | null;
   shortName?: string;
-  crest?: string;
+  crest?: string | null;
 }
 
 export interface FootballDataMatch {
@@ -54,16 +55,16 @@ export function mapFootballDataMatch(match: FootballDataMatch): FixtureSummary {
       country: match.area?.name ?? "World",
       logo: match.competition.emblem ?? undefined,
     },
-    homeTeam: {
-      id: match.homeTeam.id,
-      name: match.homeTeam.name,
-      logo: match.homeTeam.crest,
-    },
-    awayTeam: {
-      id: match.awayTeam.id,
-      name: match.awayTeam.name,
-      logo: match.awayTeam.crest,
-    },
+    homeTeam: normalizeTeamSummary({
+      id: match.homeTeam.id ?? undefined,
+      name: match.homeTeam.name ?? undefined,
+      logo: match.homeTeam.crest ?? undefined,
+    }),
+    awayTeam: normalizeTeamSummary({
+      id: match.awayTeam.id ?? undefined,
+      name: match.awayTeam.name ?? undefined,
+      logo: match.awayTeam.crest ?? undefined,
+    }),
     venue: match.venue ?? undefined,
     status: mapFootballDataStatus(match.status),
   };

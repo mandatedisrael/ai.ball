@@ -1,9 +1,10 @@
 import { BrandBall } from "@/components/brand-ball";
 import { TeamLogo } from "@/components/team-logo";
+import { displayTeamName, TBD_TEAM_NAME } from "@/lib/team-display";
 
 interface TeamRef {
-  name: string;
-  logo?: string;
+  name?: string | null;
+  logo?: string | null;
 }
 
 interface MatchTeamsHeadingProps {
@@ -26,6 +27,8 @@ export function MatchTeamsHeading({
   className = "",
 }: MatchTeamsHeadingProps) {
   const config = SIZE_CONFIG[size];
+  const homeName = displayTeamName(homeTeam.name);
+  const awayName = displayTeamName(awayTeam.name);
 
   return (
     <h2
@@ -34,9 +37,13 @@ export function MatchTeamsHeading({
       <span
         className={`${config.text} flex min-w-0 items-center justify-end gap-2 transition-colors group-hover:text-accent`}
       >
-        <span className="truncate">{homeTeam.name}</span>
+        <span
+          className={`truncate ${homeName === TBD_TEAM_NAME ? "text-muted italic" : ""}`}
+        >
+          {homeName}
+        </span>
         <TeamLogo
-          name={homeTeam.name}
+          name={homeName}
           logo={homeTeam.logo}
           size={config.logo}
         />
@@ -60,11 +67,15 @@ export function MatchTeamsHeading({
         className={`${config.text} flex min-w-0 items-center gap-2 transition-colors group-hover:text-accent`}
       >
         <TeamLogo
-          name={awayTeam.name}
+          name={awayName}
           logo={awayTeam.logo}
           size={config.logo}
         />
-        <span className="truncate">{awayTeam.name}</span>
+        <span
+          className={`truncate ${awayName === TBD_TEAM_NAME ? "text-muted italic" : ""}`}
+        >
+          {awayName}
+        </span>
       </span>
     </h2>
   );
