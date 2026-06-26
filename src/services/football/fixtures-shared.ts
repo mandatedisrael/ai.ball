@@ -37,6 +37,15 @@ export const LIVE_STATUSES = new Set([
 
 const FINISHED_STATUSES = new Set(["FT", "AET", "PEN", "AWD", "WO", "ABD", "CANC"]);
 
+const UPCOMING_STATUSES = new Set(["NS", "TBD"]);
+
+function fixtureSortTier(fixture: FixtureSummary): number {
+  if (LIVE_STATUSES.has(fixture.status)) return 0;
+  if (UPCOMING_STATUSES.has(fixture.status)) return 1;
+  if (FINISHED_STATUSES.has(fixture.status)) return 3;
+  return 2;
+}
+
 export function mapFixture(item: ApiFootballFixture): FixtureSummary {
   return {
     id: item.fixture.id,
@@ -116,10 +125,15 @@ export function dedupeFixtures(fixtures: FixtureSummary[]): FixtureSummary[] {
 
 export function sortFixtures(fixtures: FixtureSummary[]): FixtureSummary[] {
   return fixtures.sort((a, b) => {
-    const aLive = LIVE_STATUSES.has(a.status) ? 0 : 1;
-    const bLive = LIVE_STATUSES.has(b.status) ? 0 : 1;
-    if (aLive !== bLive) return aLive - bLive;
-    return new Date(a.date).getTime() - new Date(b.date).getTime();
+    const aTier = fixtureSortTier(a);
+    const bTier = fixtureSortTier(b);
+    if (aTier !== bTier) return aTier - bTier;
+
+    const aTime = new Date(a.date).getTime();
+    const bTime = new Date(b.date).getTime();
+
+    if (aTier === 3) return bTime - aTime;
+    return aTime - bTime;
   });
 }
 
